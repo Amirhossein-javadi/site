@@ -1,0 +1,12 @@
+# Django latest stable feature release — 6.1
+# برای ثبات بلندمدت (LTS، ۳ سال پشتیبانی) جایگزین آن Django>=5.2,<5.3 است.
+Django>=6.1,<6.2
+
+djangorestframework>=3.15   # API برای اتصال به فرانت React
+django-cors-headers>=4.4    # اجازه فراخوانی API از دامنه فرانت (Vite dev server)
+
+psycopg2-binary>=2.9        # درایور PostgreSQL
+django-environ>=0.11        # خواندن تنظیمات از .env بدون هاردکد کردن Secret
+
+gunicorn>=22.0               # WSGI server برای production
+whitenoise>=6.7               # سرو فایل‌های static
