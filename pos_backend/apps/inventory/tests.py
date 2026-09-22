@@ -10,6 +10,7 @@ TransactionTestCase (و نه TestCase) لازم است، چون TestCase کل ت
 """
 
 import threading
+from unittest import skipUnless
 
 from django.db import connection
 from django.test import TransactionTestCase
@@ -50,6 +51,14 @@ class ReservationConcurrencyTests(TransactionTestCase):
             reference="TEST-RECEIPT",
         )
 
+    @skipUnless(
+        connection.vendor == "postgresql",
+        "select_for_update روی SQLite قفل واقعی ردیف ایجاد نمی‌کند "
+        "(کل جدول قفل می‌شود و درخواست‌های موازی با خطای «database is "
+        "locked» شکست می‌خورند، نه با InsufficientStockError تمیز). این "
+        "تست فقط تضمین همزمانی واقعی روی PostgreSQL را اثبات می‌کند؛ "
+        "روی SQLite به‌طور معنادار قابل اجرا نیست، نه این‌که مهم نباشد.",
+    )
     def test_parallel_reservations_never_oversell(self):
         """۲۰ درخواست هم‌زمان برای ۱۰ دستگاه ⇒ دقیقاً ۱۰ موفقیت."""
         successes = []

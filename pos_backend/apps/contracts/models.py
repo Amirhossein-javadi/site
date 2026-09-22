@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 class Contract(models.Model):
@@ -41,3 +42,13 @@ class Contract(models.Model):
 
     def __str__(self):
         return f"{self.number} — {self.title}"
+
+    @property
+    def is_valid_for_ordering(self):
+        """
+        قرارداد فقط وقتی برای ثبت سفارش معتبر است که هم وضعیتش فعال باشد
+        و هم تاریخ انقضایش نگذشته باشد. این دو شرط را هرجا بخواهیم بدانیم
+        «می‌شود زیر این قرارداد سفارش ثبت کرد یا نه» از همین یک‌جا می‌خوانیم
+        تا در دو جای مختلف کد این منطق تکرار و روزی ناهماهنگ نشود.
+        """
+        return self.status == self.Status.ACTIVE and self.end_date >= timezone.now().date()

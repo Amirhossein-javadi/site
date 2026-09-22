@@ -34,6 +34,9 @@ INSTALLED_APPS = [
     "apps.catalog",
     "apps.inventory",
     "apps.orders",
+    "apps.pricing",
+    "apps.payments",
+    "apps.finance",
     "rest_framework.authtoken",
 ]
 
@@ -72,12 +75,35 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # --- Multi-tenancy: Shared DB + Tenant FK ---
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+# DB_ENGINE از .env خوانده می‌شود: "sqlite" برای توسعه محلی سریع (پیش‌فرض)
+# یا "postgres" برای هر جایی که همزمانی واقعی لازم است.
+#
+# هشدار مهم: select_for_update (قفل ردیف در apps/inventory/services.py)
+# روی SQLite قفل واقعی سطح ردیف ایجاد نمی‌کند — کل فایل دیتابیس قفل
+# می‌شود. یعنی تضمین «جلوگیری از Overselling در همزمانی» که این پروژه
+# رویش ساخته شده، روی SQLite واقعاً برقرار نیست؛ SQLite فقط برای توسعه
+# تک‌کاربره راحت است. قبل از هر تست بار واقعی یا استقرار، DB_ENGINE باید
+# postgres باشد.
+if env("DB_ENGINE", default="sqlite") == "postgres":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": env("DB_NAME", default="pos_platform"),
+            "USER": env("DB_USER", default="postgres"),
+            "PASSWORD": env("DB_PASSWORD", default=""),
+            "HOST": env("DB_HOST", default="localhost"),
+            "PORT": env("DB_PORT", default="5432"),
+            "CONN_MAX_AGE": env.int("DB_CONN_MAX_AGE", default=60),
+            "OPTIONS": {"sslmode": env("DB_SSLMODE", default="prefer")},
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 AUTH_USER_MODEL = "users.User"
 
