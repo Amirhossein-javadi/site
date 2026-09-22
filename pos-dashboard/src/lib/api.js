@@ -44,4 +44,9 @@ export const api = {
   getLedger: () => request("/inventory-ledger/"),
   getOrders: (search) => request(withQuery("/orders/", { search })),
   createOrder: (data) => request("/orders/", { method: "POST", body: JSON.stringify(data) }),
+  login: (username, password) =>
+    request("/login/", {
+      method: "POST",
+      body: JSON.stringify({ username, password }),
+    }),
 };

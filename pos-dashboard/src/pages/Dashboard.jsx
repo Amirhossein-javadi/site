@@ -1,89 +1,120 @@
-import { ShoppingCart, Package, Users, FileSignature, Edit } from "lucide-react";
+import {
+  ShoppingCart,
+  Package,
+  FileSignature,
+  Truck,
+  TrendingUp,
+  Edit,
+} from "lucide-react";
+import { Badge, Card, DataTable, PageHeader, Row, Cell } from "../components/ui";
+
+const STATS = [
+  {
+    label: "کل سفارشات",
+    value: "۱۲۴",
+    trend: "+۱۲٪",
+    icon: ShoppingCart,
+    tone: "text-accent",
+    bg: "bg-accent-gradient-soft",
+  },
+  {
+    label: "موجودی انبار",
+    value: "۸,۴۳۰",
+    trend: "+۳٪",
+    icon: Package,
+    tone: "text-emerald-400",
+    bg: "bg-emerald-500/10",
+  },
+  {
+    label: "قراردادهای فعال",
+    value: "۴۵",
+    trend: "+۵٪",
+    icon: FileSignature,
+    tone: "text-frost",
+    bg: "bg-frost/10",
+  },
+  {
+    label: "تامین‌کنندگان",
+    value: "۱۲",
+    trend: "بدون تغییر",
+    icon: Truck,
+    tone: "text-accent2",
+    bg: "bg-accent2/10",
+  },
+];
+
+const RECENT_ORDERS = [
+  {
+    id: "#ORD-104",
+    customer: "نمایندگی ولیعصر",
+    amount: "300,000",
+    status: "تایید شده",
+    tone: "success",
+  },
+  {
+    id: "#ORD-105",
+    customer: "فروشگاه مرکزی شیراز",
+    amount: "1,250,000",
+    status: "در انتظار تایید",
+    tone: "warn",
+  },
+];
 
 export default function Dashboard() {
   return (
-    <div className="space-y-8 dir-rtl font-sans pb-10">
+    <div className="space-y-7 pb-10">
+      <PageHeader
+        title="نگاه کلی سیستم فروش"
+        subtitle="خلاصه وضعیت سفارشات و موجودی انبار در یک نگاه"
+      />
+
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {STATS.map((s) => (
+          <Card
+            key={s.label}
+            glow
+            className="group p-6 transition-transform duration-300 hover:-translate-y-1"
+          >
+            <div className="flex items-start justify-between">
+              <div className={`rounded-2xl p-3.5 ${s.bg} ${s.tone}`}>
+                <s.icon size={22} strokeWidth={2} />
+              </div>
+              <span className="flex items-center gap-1 rounded-full bg-surface2 px-2 py-1 text-[11px] font-semibold text-text-muted">
+                <TrendingUp size={12} className="text-emerald-400" />
+                {s.trend}
+              </span>
+            </div>
+            <p className="mt-5 text-sm font-medium text-text-muted">{s.label}</p>
+            <h3 className="mt-1 text-3xl font-extrabold tracking-tight text-text">
+              {s.value}
+            </h3>
+          </Card>
+        ))}
+      </div>
+
       <div>
-        {/* رنگ این دو خط به تیره تغییر کرد */}
-        <h1 className="text-2xl font-extrabold text-slate-800 mb-2">نگاه کلی سیستم فروش</h1>
-        <p className="text-slate-500 text-sm">خلاصه وضعیت سفارشات و موجودی انبار در یک نگاه</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-100 flex items-center gap-5">
-          <div className="bg-blue-50 p-4 rounded-2xl text-blue-600"><ShoppingCart size={28} /></div>
-          <div>
-            <p className="text-sm font-bold text-slate-500 mb-1">کل سفارشات</p>
-            <h3 className="text-2xl font-black text-slate-800">۱۲۴</h3>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-100 flex items-center gap-5">
-          <div className="bg-emerald-50 p-4 rounded-2xl text-emerald-600"><Package size={28} /></div>
-          <div>
-            <p className="text-sm font-bold text-slate-500 mb-1">موجودی انبار</p>
-            <h3 className="text-2xl font-black text-slate-800">۸,۴۳۰</h3>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-100 flex items-center gap-5">
-          <div className="bg-amber-50 p-4 rounded-2xl text-amber-600"><FileSignature size={28} /></div>
-          <div>
-            <p className="text-sm font-bold text-slate-500 mb-1">قراردادهای فعال</p>
-            <h3 className="text-2xl font-black text-slate-800">۴۵</h3>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-100 flex items-center gap-5">
-          <div className="bg-rose-50 p-4 rounded-2xl text-rose-500"><Users size={28} /></div>
-          <div>
-            <p className="text-sm font-bold text-slate-500 mb-1">تامین‌کنندگان</p>
-            <h3 className="text-2xl font-black text-slate-800">۱۲</h3>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100">
-          <h2 className="text-lg font-bold text-slate-800">آخرین سفارشات ثبت شده</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-right">
-            <thead className="bg-slate-50 text-slate-500 text-sm">
-              <tr>
-                <th className="p-4 font-bold">شماره سفارش</th>
-                <th className="p-4 font-bold">مشتری / نماینده</th>
-                <th className="p-4 font-bold">مبلغ کل (ریال)</th>
-                <th className="p-4 font-bold">وضعیت</th>
-                <th className="p-4 font-bold">عملیات</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              <tr className="hover:bg-slate-50 transition-colors">
-                <td className="p-4 font-bold text-slate-800">#ORD-104</td>
-                <td className="p-4 font-medium">نمایندگی ولیعصر</td>
-                <td className="p-4 font-mono font-bold text-slate-600">300,000.00</td>
-                <td className="p-4">
-                  <span className="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-bold">تایید شده</span>
-                </td>
-                <td className="p-4">
-                  <button className="text-slate-400 hover:text-blue-600 transition-colors"><Edit size={18} /></button>
-                </td>
-              </tr>
-              <tr className="hover:bg-slate-50 transition-colors">
-                <td className="p-4 font-bold text-slate-800">#ORD-105</td>
-                <td className="p-4 font-medium">فروشگاه مرکزی شیراز</td>
-                <td className="p-4 font-mono font-bold text-slate-600">1,250,000.00</td>
-                <td className="p-4">
-                  <span className="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-full text-xs font-bold">در انتظار تایید</span>
-                </td>
-                <td className="p-4">
-                  <button className="text-slate-400 hover:text-blue-600 transition-colors"><Edit size={18} /></button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <PageHeader title="آخرین سفارشات ثبت شده" />
+        <DataTable
+          columns={["شماره سفارش", "مشتری / نماینده", "مبلغ کل (ریال)", "وضعیت", "عملیات"]}
+        >
+          {RECENT_ORDERS.map((o) => (
+            <Row key={o.id}>
+              <Cell className="font-mono text-xs font-semibold">{o.id}</Cell>
+              <Cell>{o.customer}</Cell>
+              <Cell muted dir="ltr" className="font-mono text-right">
+                {o.amount}
+              </Cell>
+              <Cell>
+                <Badge tone={o.tone}>{o.status}</Badge>
+              </Cell>
+              <Cell>
+                <button className="flex h-8 w-8 items-center justify-center rounded-lg text-text-faint transition-colors hover:bg-accent-soft hover:text-accent">
+                  <Edit size={16} strokeWidth={2} />
+                </button>
+              </Cell>
+            </Row>
+          ))}
+        </DataTable>
       </div>
     </div>
   );

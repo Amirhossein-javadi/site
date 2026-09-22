@@ -17,7 +17,7 @@ import {
 export const navGroups = [
   {
     label: "اصلی",
-    items: [{ label: "داشبورد", path: "/", icon: LayoutDashboard }],
+    items: [{ label: "داشبورد", path: "/dashboard", icon: LayoutDashboard }],
   },
   {
     label: "انبار",
