@@ -1,111 +1,125 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Lock, ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowRight, Eye, EyeOff, LockKeyhole } from "lucide-react";
+import { Button, Field, Input } from "../components/ui";
 import { api } from "../lib/api";
+import { isAuthenticated, setToken } from "../lib/auth";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [searchParams] = useSearchParams();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  // فقط مسیر داخلی پذیرفته می‌شود تا ?next به دامنه بیرونی هدایت نکند.
+  const requested = searchParams.get("next");
+  const destination =
+    requested && requested.startsWith("/") && !requested.startsWith("//")
+      ? requested
+      : "/dashboard";
+
+  useEffect(() => {
+    if (isAuthenticated()) navigate(destination, { replace: true });
+  }, [destination, navigate]);
+
+  async function handleLogin(event) {
+    event.preventDefault();
     setError("");
     setIsLoading(true);
     try {
-      const data = await api.login(email, password);
-      localStorage.setItem("token", data.token);
-      navigate("/dashboard");
+      const data = await api.login(username, password);
+      setToken(data.token);
+      navigate(destination, { replace: true });
     } catch (err) {
-      setError(err.message || "ایمیل یا رمز عبور اشتباه است!");
+      setError(err.message || "نام کاربری یا رمز عبور صحیح نیست.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg text-text">
-      {/* هاله‌های نور پس‌زمینه */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 animate-float rounded-full bg-accent/15 blur-[140px]" />
-        <div className="absolute bottom-0 right-0 h-[320px] w-[320px] animate-float-slow rounded-full bg-accent2/15 blur-[130px]" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg px-5 py-20 text-text">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-1/2 top-[42%] h-[540px] w-[540px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.045] blur-[120px]" />
+        <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-accent/10 blur-[120px]" />
       </div>
 
       <Link
         to="/"
-        className="absolute right-6 top-6 z-10 flex items-center gap-2 text-sm font-medium text-text-muted transition-colors hover:text-text"
+        className="absolute right-5 top-5 z-10 flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-text-muted transition-colors hover:bg-white/5 hover:text-text sm:right-8 sm:top-7"
       >
-        <ArrowRight size={16} />
-        بازگشت به صفحه اصلی
+        <ArrowRight size={15} />
+        صفحه اصلی
       </Link>
 
-      <div className="glass-strong relative z-10 w-full max-w-md rounded-3xl border border-border-soft p-8 shadow-card-lg sm:p-10">
-        <div className="mb-8 flex flex-col items-center">
-          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-gradient-soft text-accent">
-            <Lock size={26} strokeWidth={2} />
+      <section className="glass-strong relative z-10 w-full max-w-[430px] rounded-[30px] border border-white/10 p-6 shadow-card-lg sm:p-9">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-[18px] bg-white text-bg shadow-[0_12px_45px_-15px_rgba(255,255,255,.7)]">
+            <LockKeyhole size={24} strokeWidth={2} />
           </div>
-          <h2 className="text-xl font-extrabold text-text">ورود به پلتفرم فروش</h2>
-          <p className="mt-2 text-sm text-text-muted">
-            لطفاً ایمیل و رمز عبور خود را وارد کنید
+          <h1 className="text-xl font-extrabold tracking-tight">ورود به مرکز عملیات</h1>
+          <p className="mt-2 text-sm leading-6 text-text-muted">
+            برای مدیریت فروش و موجودی وارد حساب سازمانی شوید.
           </p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-5">
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-text">
-              آدرس ایمیل
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-border-soft bg-surface2/70 px-4 py-3 text-left dir-ltr text-sm text-text outline-none transition-all placeholder:text-text-faint focus:border-accent/60 focus:bg-surface2 focus:ring-4 focus:ring-accent/10"
-              placeholder="admin@example.com"
+          <Field label="نام کاربری">
+            <Input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              dir="ltr"
+              autoComplete="username"
+              placeholder="admin"
               required
             />
-          </div>
+          </Field>
 
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-text">
-              رمز عبور
-            </label>
+          <Field label="رمز عبور">
             <div className="relative">
-              <input
+              <Input
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-border-soft bg-surface2/70 px-4 py-3 text-left dir-ltr text-sm text-text outline-none transition-all placeholder:text-text-faint focus:border-accent/60 focus:bg-surface2 focus:ring-4 focus:ring-accent/10"
+                dir="ltr"
+                autoComplete="current-password"
+                className="pl-11"
                 placeholder="••••••••"
                 required
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-text-faint transition-colors hover:text-accent"
+                aria-label={showPassword ? "پنهان کردن رمز" : "نمایش رمز"}
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute left-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-text-faint transition-colors hover:bg-white/5 hover:text-text"
               >
-                {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
               </button>
             </div>
-          </div>
+          </Field>
 
           {error && (
-            <p className="rounded-xl bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-400">
+            <p
+              role="alert"
+              className="rounded-xl bg-rose-400/10 px-4 py-3 text-xs leading-5 text-rose-300 ring-1 ring-inset ring-rose-400/15"
+            >
               {error}
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="mt-2 flex w-full items-center justify-center rounded-xl bg-accent-gradient py-3.5 font-bold text-white shadow-lg shadow-accent/25 transition-all hover:shadow-glow disabled:opacity-70"
-          >
-            {isLoading ? "در حال بررسی..." : "ورود به داشبورد"}
-          </button>
+          <Button type="submit" size="lg" loading={isLoading} className="w-full">
+            ورود به داشبورد
+          </Button>
         </form>
-      </div>
-    </div>
+
+        <p className="mt-6 text-center text-[11px] leading-5 text-text-faint">
+          دسترسی به این سامانه محدود به کاربران مجاز سازمان است.
+        </p>
+      </section>
+    </main>
   );
 }

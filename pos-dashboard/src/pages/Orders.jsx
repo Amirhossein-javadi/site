@@ -1,54 +1,463 @@
-import { ShoppingCart } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { Plus, ShoppingCart, Trash2 } from "lucide-react";
 import {
-  Badge, Cell, DataTable, EmptyState, ErrorState,
-  PageHeader, Row, TableSkeleton,
+  Button,
+  Card,
+  Cell,
+  DataTable,
+  DetailItem,
+  Drawer,
+  EmptyState,
+  ErrorState,
+  Field,
+  Input,
+  Modal,
+  PageHeader,
+  Row,
+  SearchInput,
+  SectionHeader,
+  Select,
+  TableSkeleton,
+  Textarea,
 } from "../components/ui";
+import StatusBadge from "../components/StatusBadge";
+import { useToast } from "../components/Toast";
 import { api } from "../lib/api";
-import { formatNumber, useApi } from "../lib/hooks";
+import {
+  formatDate,
+  formatDateTime,
+  formatMoney,
+  formatNumber,
+  useApi,
+  useDebounced,
+  useMutation,
+} from "../lib/hooks";
+
+const STATUS_OPTIONS = [
+  { value: "", label: "همه وضعیت‌ها" },
+  { value: "pending", label: "در انتظار بررسی" },
+  { value: "confirmed", label: "تایید شده" },
+  { value: "processing", label: "در حال آماده‌سازی" },
+  { value: "shipped", label: "ارسال شده" },
+  { value: "delivered", label: "تحویل شده" },
+  { value: "cancelled", label: "لغو شده" },
+];
+
+// مسیرهای مجاز چرخه عمر سفارش، مطابق services بک‌اند.
+const NEXT_STATUSES = {
+  pending: [{ value: "confirmed", label: "تایید سفارش" }],
+  confirmed: [{ value: "processing", label: "شروع آماده‌سازی" }],
+  processing: [{ value: "shipped", label: "ثبت ارسال" }],
+  shipped: [{ value: "delivered", label: "ثبت تحویل" }],
+};
 
 export default function Orders() {
-  const { data, status, error } = useApi(() => api.getOrders(""), []);
+  const toast = useToast();
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const debouncedSearch = useDebounced(search);
+
+  const listFetcher = useCallback(
+    () => api.getOrders({ search: debouncedSearch, status: statusFilter }),
+    [debouncedSearch, statusFilter]
+  );
+  const { data: orders, status, error, refetch } = useApi(listFetcher);
 
   return (
-    <div>
+    <>
       <PageHeader
-        title="سفارشات"
-        badge={
-          status === "ready" && (
-            <Badge>{formatNumber(data?.length ?? 0)} سفارش</Badge>
-          )
+        eyebrow="فروش"
+        title="سفارش‌ها"
+        subtitle="ثبت سفارش، پیگیری چرخه عمر و مدیریت وضعیت‌ها"
+        actions={
+          <Button icon={Plus} onClick={() => setCreateOpen(true)}>
+            ثبت سفارش
+          </Button>
         }
+      >
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="جستجوی شماره سفارش یا قرارداد..."
+          />
+          <Select
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={STATUS_OPTIONS}
+            className="sm:w-48"
+          />
+        </div>
+      </PageHeader>
+
+      {status === "loading" && <TableSkeleton rows={7} cols={6} />}
+      {status === "error" && <ErrorState message={error} onRetry={refetch} />}
+
+      {status === "ready" &&
+        (orders.length === 0 ? (
+          <EmptyState
+            icon={ShoppingCart}
+            title="سفارشی یافت نشد"
+            description={
+              search || statusFilter
+                ? "با این فیلترها نتیجه‌ای وجود ندارد."
+                : "اولین سفارش را از دکمه بالا ثبت کنید."
+            }
+            action={
+              !search && !statusFilter ? (
+                <Button icon={Plus} onClick={() => setCreateOpen(true)}>
+                  ثبت سفارش
+                </Button>
+              ) : null
+            }
+          />
+        ) : (
+          <DataTable columns={["شماره سفارش", "قرارداد", "انبار", "اقلام", "وضعیت", "تاریخ ثبت"]}>
+            {orders.map((order) => (
+              <Row key={order.id} onClick={() => setSelectedId(order.id)}>
+                <Cell className="font-mono text-xs font-bold" dir="ltr">
+                  {order.order_number}
+                </Cell>
+                <Cell muted>{order.contract_number ?? "—"}</Cell>
+                <Cell muted>{order.warehouse_name ?? "—"}</Cell>
+                <Cell>{formatNumber(order.item_count)}</Cell>
+                <Cell>
+                  <StatusBadge status={order.status} label={order.status_label} />
+                </Cell>
+                <Cell muted className="whitespace-nowrap text-xs">
+                  {formatDate(order.created_at)}
+                </Cell>
+              </Row>
+            ))}
+          </DataTable>
+        ))}
+
+      <OrderDrawer
+        orderId={selectedId}
+        onClose={() => setSelectedId(null)}
+        onChanged={refetch}
+        toast={toast}
       />
+      <CreateOrderModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={(order) => {
+          refetch();
+          setCreateOpen(false);
+          setSelectedId(order.id);
+        }}
+        toast={toast}
+      />
+    </>
+  );
+}
 
-      {status === "loading" && <TableSkeleton cols={4} />}
-      {status === "error" && <ErrorState message={error} />}
+function OrderDrawer({ orderId, onClose, onChanged, toast }) {
+  const fetcher = useCallback(
+    () => (orderId ? api.getOrder(orderId) : Promise.resolve(null)),
+    [orderId]
+  );
+  const { data: order, status, error, refetch } = useApi(fetcher);
 
-      {status === "ready" && data.length === 0 && (
-        <EmptyState
-          icon={ShoppingCart}
-          title="سفارشی پیدا نشد"
-          description="هنوز هیچ سفارشی در سیستم ثبت نشده است."
-        />
+  const transition = useMutation((id, to, note) => api.transitionOrder(id, to, note));
+  const cancel = useMutation((id, note) => api.cancelOrder(id, note));
+
+  async function handleTransition(toStatus) {
+    const result = await transition.run(order.id, toStatus, "");
+    if (result.ok) {
+      toast.success("وضعیت سفارش به‌روزرسانی شد.");
+      refetch();
+      onChanged();
+    } else {
+      toast.error(result.error.message);
+    }
+  }
+
+  async function handleCancel() {
+    const result = await cancel.run(order.id, "");
+    if (result.ok) {
+      toast.success("سفارش لغو شد.");
+      refetch();
+      onChanged();
+    } else {
+      toast.error(result.error.message);
+    }
+  }
+
+  const nextActions = order ? NEXT_STATUSES[order.status] ?? [] : [];
+  const busy = transition.pending || cancel.pending;
+
+  return (
+    <Drawer
+      open={Boolean(orderId)}
+      onClose={onClose}
+      title={order ? order.order_number : "جزئیات سفارش"}
+      subtitle={order ? `ثبت‌شده در ${formatDateTime(order.created_at)}` : undefined}
+    >
+      {status === "loading" && <TableSkeleton rows={4} cols={2} />}
+      {status === "error" && <ErrorState message={error} onRetry={refetch} />}
+
+      {status === "ready" && order && (
+        <div className="space-y-7">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge status={order.status} label={order.status_label} />
+            {nextActions.map((action) => (
+              <Button
+                key={action.value}
+                size="sm"
+                variant="secondary"
+                loading={busy}
+                onClick={() => handleTransition(action.value)}
+              >
+                {action.label}
+              </Button>
+            ))}
+            {order.is_cancellable && (
+              <Button size="sm" variant="danger" loading={busy} onClick={handleCancel}>
+                لغو سفارش
+              </Button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <DetailItem label="قرارداد" value={order.contract_number} />
+            <DetailItem label="انبار مبدأ" value={order.warehouse_name} />
+            <DetailItem label="تعداد اقلام" value={formatNumber(order.item_count)} />
+            <DetailItem
+              label="خروج از انبار"
+              value={order.stock_issued_at ? formatDateTime(order.stock_issued_at) : "انجام نشده"}
+            />
+          </div>
+
+          {order.notes && (
+            <div>
+              <SectionHeader title="یادداشت" />
+              <Card className="p-4 text-sm leading-6 text-text-muted">{order.notes}</Card>
+            </div>
+          )}
+
+          <div>
+            <SectionHeader title="اقلام سفارش" />
+            <Card className="divide-y divide-white/[0.055] overflow-hidden">
+              {order.items.map((item) => (
+                <div key={item.id} className="flex items-center gap-3 px-4 py-3.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-text">{item.product_title}</p>
+                    <p className="truncate font-mono text-[11px] text-text-faint" dir="ltr">
+                      {item.sku}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-left">
+                    <p className="text-xs font-bold text-text">
+                      {formatNumber(item.quantity)} ×{" "}
+                      {formatMoney(item.unit_price, item.currency)}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-text-faint">
+                      {formatMoney(item.line_total, item.currency)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </Card>
+          </div>
+
+          <div>
+            <SectionHeader title="تاریخچه وضعیت" />
+            <ol className="relative space-y-4 border-r border-white/[0.08] pr-5">
+              {order.status_history.map((entry) => (
+                <li key={entry.id} className="relative">
+                  <span className="absolute -right-[23px] top-1.5 h-2 w-2 rounded-full bg-white/40" />
+                  <p className="text-xs font-bold text-text">
+                    {entry.from_status_label} ← {entry.to_status_label}
+                  </p>
+                  <p className="mt-1 text-[11px] text-text-faint">
+                    {formatDateTime(entry.changed_at)}
+                    {entry.changed_by_email ? ` · ${entry.changed_by_email}` : ""}
+                  </p>
+                  {entry.note && (
+                    <p className="mt-1 text-[11px] leading-5 text-text-muted">{entry.note}</p>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
       )}
+    </Drawer>
+  );
+}
 
-      {status === "ready" && data.length > 0 && (
-        <DataTable columns={["شماره سفارش", "مبلغ کل", "تاریخ ثبت", "وضعیت"]}>
-          {data.map((order) => (
-            <Row key={order.id}>
-              <Cell muted className="font-mono text-xs">#{order.id}</Cell>
-              <Cell>{formatNumber(order.total_amount)} ریال</Cell>
-              <Cell muted dir="ltr">
-                {new Date(order.created_at).toLocaleDateString("fa-IR")}
-              </Cell>
-              <Cell>
-                <Badge tone={order.status === "pending" ? "warn" : "success"}>
-                  {order.status_label}
-                </Badge>
-              </Cell>
-            </Row>
-          ))}
-        </DataTable>
+function CreateOrderModal({ open, onClose, onCreated, toast }) {
+  const optionsFetcher = useCallback(
+    () =>
+      open
+        ? Promise.all([api.getContracts(), api.getWarehouses(), api.getVariants()])
+        : Promise.resolve(null),
+    [open]
+  );
+  const { data: options, status, error, refetch } = useApi(optionsFetcher);
+
+  const [contract, setContract] = useState("");
+  const [warehouse, setWarehouse] = useState("");
+  const [notes, setNotes] = useState("");
+  const [items, setItems] = useState([{ variant: "", quantity: "1" }]);
+
+  const create = useMutation((payload) => api.createOrder(payload));
+
+  const [contracts, warehouses, variants] = options ?? [[], [], []];
+
+  const variantOptions = useMemo(
+    () => [
+      { value: "", label: "انتخاب کالا" },
+      ...variants.map((v) => ({ value: String(v.id), label: `${v.name} — ${v.sku}` })),
+    ],
+    [variants]
+  );
+
+  function updateItem(index, patch) {
+    setItems((list) => list.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+  }
+
+  function resetForm() {
+    setContract("");
+    setWarehouse("");
+    setNotes("");
+    setItems([{ variant: "", quantity: "1" }]);
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    const payload = {
+      contract: Number(contract),
+      warehouse: Number(warehouse),
+      notes,
+      items: items
+        .filter((item) => item.variant && Number(item.quantity) > 0)
+        .map((item) => ({ variant: Number(item.variant), quantity: Number(item.quantity) })),
+    };
+
+    if (!payload.contract || !payload.warehouse || payload.items.length === 0) {
+      toast.error("قرارداد، انبار و حداقل یک قلم کالا الزامی است.");
+      return;
+    }
+
+    const result = await create.run(payload);
+    if (result.ok) {
+      toast.success("سفارش با موفقیت ثبت شد.");
+      resetForm();
+      onCreated(result.data);
+    } else {
+      toast.error(result.error.message);
+    }
+  }
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="ثبت سفارش جدید"
+      subtitle="سفارش تحت یک قرارداد فعال ثبت و موجودی به‌صورت خودکار رزرو می‌شود."
+      size="lg"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>
+            انصراف
+          </Button>
+          <Button form="create-order" type="submit" loading={create.pending}>
+            ثبت سفارش
+          </Button>
+        </div>
+      }
+    >
+      {status === "loading" && <TableSkeleton rows={3} cols={2} />}
+      {status === "error" && <ErrorState message={error} onRetry={refetch} />}
+
+      {status === "ready" && options && (
+        <form id="create-order" onSubmit={handleSubmit} className="space-y-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="قرارداد">
+              <Select
+                value={contract}
+                onChange={setContract}
+                options={[
+                  { value: "", label: "انتخاب قرارداد" },
+                  ...contracts.map((c) => ({
+                    value: String(c.id),
+                    label: `${c.number} — ${c.company}`,
+                  })),
+                ]}
+              />
+            </Field>
+            <Field label="انبار مبدأ">
+              <Select
+                value={warehouse}
+                onChange={setWarehouse}
+                options={[
+                  { value: "", label: "انتخاب انبار" },
+                  ...warehouses.map((w) => ({ value: String(w.id), label: w.name })),
+                ]}
+              />
+            </Field>
+          </div>
+
+          <div>
+            <SectionHeader
+              title="اقلام سفارش"
+              action={
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  icon={Plus}
+                  onClick={() => setItems((list) => [...list, { variant: "", quantity: "1" }])}
+                >
+                  افزودن قلم
+                </Button>
+              }
+            />
+            <div className="space-y-3">
+              {items.map((item, index) => (
+                <div key={index} className="flex items-end gap-2">
+                  <Field label="کالا" className="flex-1">
+                    <Select
+                      value={item.variant}
+                      onChange={(value) => updateItem(index, { variant: value })}
+                      options={variantOptions}
+                    />
+                  </Field>
+                  <Field label="تعداد" className="w-24 shrink-0">
+                    <Input
+                      type="number"
+                      min="1"
+                      value={item.quantity}
+                      onChange={(e) => updateItem(index, { quantity: e.target.value })}
+                    />
+                  </Field>
+                  <button
+                    type="button"
+                    aria-label="حذف قلم"
+                    disabled={items.length === 1}
+                    onClick={() => setItems((list) => list.filter((_, i) => i !== index))}
+                    className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-text-faint transition-colors hover:bg-rose-400/10 hover:text-rose-300 disabled:opacity-30"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Field label="یادداشت (اختیاری)">
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="توضیح تکمیلی برای این سفارش..."
+            />
+          </Field>
+        </form>
       )}
-    </div>
+    </Modal>
   );
 }

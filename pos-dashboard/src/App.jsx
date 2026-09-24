@@ -1,28 +1,40 @@
-import { Routes, Route } from "react-router-dom";
-import Landing from "./pages/Landing";
-import Login from "./pages/Login";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import Landing from "./pages/landing";
+import Login from "./pages/login";
 import Layout from "./layout/Layout";
 import StubPage from "./pages/StubPage";
 import { navGroups } from "./data/nav";
-
-// صفحات پنلی که تا الان به API متصل شده‌اند
+import { isAuthenticated } from "./lib/auth";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Inventory from "./pages/Inventory";
 import Contracts from "./pages/Contracts";
 import Orders from "./pages/Orders";
+import Proformas from "./pages/Proformas";
+import Payments from "./pages/Payments";
+import Credits from "./pages/Credits";
 
-// نگاشت مسیر پنل به کامپوننت واقعی‌اش؛ هر آیتم منو که اینجا نباشد
-// به‌صورت خودکار StubPage می‌گیرد تا کلیک روی منو هرگز به ۴۰۴ نخورد.
 const PAGE_COMPONENTS = {
   "/dashboard": Dashboard,
   "/products": Products,
   "/inventory": Inventory,
   "/contracts": Contracts,
   "/orders": Orders,
+  "/proforma-invoices": Proformas,
+  "/payments": Payments,
+  "/credits": Credits,
 };
 
 const PANEL_ROUTES = navGroups.flatMap((group) => group.items);
+
+function ProtectedRoute({ children }) {
+  const location = useLocation();
+  if (!isAuthenticated()) {
+    const next = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?next=${next}`} replace />;
+  }
+  return children;
+}
 
 export default function App() {
   return (
@@ -37,9 +49,11 @@ export default function App() {
             key={path}
             path={path}
             element={
-              <Layout>
-                {Page ? <Page /> : <StubPage title={label} icon={icon} />}
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  {Page ? <Page /> : <StubPage title={label} icon={icon} />}
+                </Layout>
+              </ProtectedRoute>
             }
           />
         );
@@ -52,15 +66,18 @@ export default function App() {
 
 function NotFound() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-bg px-6 text-center text-text">
-      <h1 className="text-6xl font-extrabold text-gradient">۴۰۴</h1>
-      <p className="text-text-muted">صفحه مورد نظر پیدا نشد!</p>
+    <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-bg px-6 text-center text-text">
+      <p className="text-7xl font-black tracking-tighter text-gradient">۴۰۴</p>
+      <h1 className="text-lg font-bold">این صفحه وجود ندارد</h1>
+      <p className="text-sm text-text-muted">
+        آدرس را بررسی کنید یا به صفحه اصلی برگردید.
+      </p>
       <a
         href="/"
-        className="rounded-xl bg-accent-gradient px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-accent/25 transition-all hover:shadow-glow"
+        className="mt-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-bg transition-transform hover:-translate-y-0.5"
       >
         بازگشت به صفحه اصلی
       </a>
-    </div>
+    </main>
   );
 }
