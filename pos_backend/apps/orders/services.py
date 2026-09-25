@@ -124,10 +124,7 @@ def place_order(*, contract, warehouse: Warehouse, items: list, user=None, notes
         variant = entry["variant"]
         quantity = entry["quantity"]
 
-        # reserve_stock خودش select_for_update دارد و اگر موجودی کافی
-        # نباشد InsufficientStockError می‌اندازد — همان‌جا کل تراکنش
-        # برمی‌گردد، از جمله ساخت Order بالا.
-        inventory_services.reserve_stock(
+inventory_services.reserve_stock(
             warehouse=warehouse,
             variant=variant,
             quantity=quantity,
@@ -139,6 +136,7 @@ def place_order(*, contract, warehouse: Warehouse, items: list, user=None, notes
         OrderItem.objects.create(
             order=order,
             variant=variant,
+            agent=contract.agent,  # <--- این خط اضافه شد
             quantity=quantity,
             unit_price=variant.base_price,
             currency=variant.currency,

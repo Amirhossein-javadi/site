@@ -189,6 +189,15 @@ function OrderDrawer({ orderId, onClose, onChanged, toast }) {
   const nextActions = order ? NEXT_STATUSES[order.status] ?? [] : [];
   const busy = transition.pending || cancel.pending;
 
+  // جمع کل سفارش به تفکیک ارز — چون اقلام یک سفارش می‌توانند ارز متفاوت داشته باشند.
+  const orderTotals = useMemo(() => {
+    if (!order) return {};
+    return order.items.reduce((totals, item) => {
+      totals[item.currency] = (totals[item.currency] ?? 0) + Number(item.line_total);
+      return totals;
+    }, {});
+  }, [order]);
+
   return (
     <Drawer
       open={Boolean(orderId)}
@@ -261,6 +270,15 @@ function OrderDrawer({ orderId, onClose, onChanged, toast }) {
                 </div>
               ))}
             </Card>
+            {Object.keys(orderTotals).length > 0 && (
+              <div className="mt-2 flex flex-wrap justify-end gap-x-4 gap-y-1 px-1">
+                {Object.entries(orderTotals).map(([currency, amount]) => (
+                  <span key={currency} className="text-xs font-bold text-text">
+                    جمع کل: {formatMoney(amount, currency)}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -308,6 +326,12 @@ function CreateOrderModal({ open, onClose, onCreated, toast }) {
 
   const [contracts, warehouses, variants] = options ?? [[], [], []];
 
+  const variantsById = useMemo(() => {
+    const map = {};
+    for (const v of variants) map[String(v.id)] = v;
+    return map;
+  }, [variants]);
+
   const variantOptions = useMemo(
     () => [
       { value: "", label: "انتخاب کالا" },
@@ -316,8 +340,34 @@ function CreateOrderModal({ open, onClose, onCreated, toast }) {
     [variants]
   );
 
+  // جمع کل فرم به تفکیک ارز — برای این‌که پیش از ثبت، مبلغ نهایی سفارش دیده شود.
+  const draftTotals = useMemo(() => {
+    return items.reduce((totals, item) => {
+      const variant = variantsById[item.variant];
+      const qty = Number(item.quantity);
+      if (!variant || !qty) return totals;
+      totals[variant.currency] = (totals[variant.currency] ?? 0) + qty * Number(variant.base_price);
+      return totals;
+    }, {});
+  }, [items, variantsById]);
+
   function updateItem(index, patch) {
-    setItems((list) => list.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+    setItems((list) =>
+      list.map((item, i) => {
+        if (i !== index) return item;
+        const next = { ...item, ...patch };
+        // با انتخاب یک کالای جدید، اگر تعداد فعلی کمتر از حداقل سفارش آن باشد،
+        // خودکار روی حداقل مجاز تنظیم می‌شود تا خطای بدیهی در ثبت پیش نیاید.
+        if (patch.variant) {
+          const variant = variantsById[patch.variant];
+          const minQty = variant?.min_order_quantity || 1;
+          if (!next.quantity || Number(next.quantity) < minQty) {
+            next.quantity = String(minQty);
+          }
+        }
+        return next;
+      })
+    );
   }
 
   function resetForm() {
@@ -329,19 +379,31 @@ function CreateOrderModal({ open, onClose, onCreated, toast }) {
 
   async function handleSubmit(event) {
     event.preventDefault();
+    const cleanedItems = items.filter((item) => item.variant && Number(item.quantity) > 0);
+
+    if (!contract || !warehouse || cleanedItems.length === 0) {
+      toast.error("قرارداد، انبار و حداقل یک قلم کالا الزامی است.");
+      return;
+    }
+
+    for (const item of cleanedItems) {
+      const variant = variantsById[item.variant];
+      const minQty = variant?.min_order_quantity || 1;
+      if (variant && Number(item.quantity) < minQty) {
+        toast.error(`حداقل تعداد سفارش برای «${variant.name}» ${minQty} عدد است.`);
+        return;
+      }
+    }
+
     const payload = {
       contract: Number(contract),
       warehouse: Number(warehouse),
       notes,
-      items: items
-        .filter((item) => item.variant && Number(item.quantity) > 0)
-        .map((item) => ({ variant: Number(item.variant), quantity: Number(item.quantity) })),
+      items: cleanedItems.map((item) => ({
+        variant: Number(item.variant),
+        quantity: Number(item.quantity),
+      })),
     };
-
-    if (!payload.contract || !payload.warehouse || payload.items.length === 0) {
-      toast.error("قرارداد، انبار و حداقل یک قلم کالا الزامی است.");
-      return;
-    }
 
     const result = await create.run(payload);
     if (result.ok) {
@@ -418,35 +480,77 @@ function CreateOrderModal({ open, onClose, onCreated, toast }) {
               }
             />
             <div className="space-y-3">
-              {items.map((item, index) => (
-                <div key={index} className="flex items-end gap-2">
-                  <Field label="کالا" className="flex-1">
-                    <Select
-                      value={item.variant}
-                      onChange={(value) => updateItem(index, { variant: value })}
-                      options={variantOptions}
-                    />
-                  </Field>
-                  <Field label="تعداد" className="w-24 shrink-0">
-                    <Input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(index, { quantity: e.target.value })}
-                    />
-                  </Field>
-                  <button
-                    type="button"
-                    aria-label="حذف قلم"
-                    disabled={items.length === 1}
-                    onClick={() => setItems((list) => list.filter((_, i) => i !== index))}
-                    className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-text-faint transition-colors hover:bg-rose-400/10 hover:text-rose-300 disabled:opacity-30"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))}
+              {items.map((item, index) => {
+                const variant = variantsById[item.variant];
+                const qty = Number(item.quantity) || 0;
+                const lineTotal = variant ? qty * Number(variant.base_price) : 0;
+                const minQty = variant?.min_order_quantity || 1;
+                const belowMin = variant && qty > 0 && qty < minQty;
+                const overStock = variant && qty > variant.total_available;
+
+                return (
+                  <div key={index} className="space-y-1.5">
+                    <div className="flex items-end gap-2">
+                      <Field label="کالا" className="flex-1">
+                        <Select
+                          value={item.variant}
+                          onChange={(value) => updateItem(index, { variant: value })}
+                          options={variantOptions}
+                        />
+                      </Field>
+                      <Field label="تعداد" className="w-24 shrink-0">
+                        <Input
+                          type="number"
+                          min={minQty}
+                          value={item.quantity}
+                          onChange={(e) => updateItem(index, { quantity: e.target.value })}
+                        />
+                      </Field>
+                      <button
+                        type="button"
+                        aria-label="حذف قلم"
+                        disabled={items.length === 1}
+                        onClick={() => setItems((list) => list.filter((_, i) => i !== index))}
+                        className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-text-faint transition-colors hover:bg-rose-400/10 hover:text-rose-300 disabled:opacity-30"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+
+                    {variant && (
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pr-1 text-[11px] text-text-faint">
+                        <span>قیمت واحد: {formatMoney(variant.base_price, variant.currency)}</span>
+                        <span>موجودی قابل‌فروش: {formatNumber(variant.total_available)}</span>
+                        {minQty > 1 && <span>حداقل سفارش: {formatNumber(minQty)}</span>}
+                        <span className="mr-auto font-bold text-text-muted">
+                          جمع ردیف: {formatMoney(lineTotal, variant.currency)}
+                        </span>
+                      </div>
+                    )}
+                    {belowMin && (
+                      <p className="pr-1 text-[11px] text-amber-300">
+                        حداقل تعداد سفارش برای این کالا {formatNumber(minQty)} عدد است.
+                      </p>
+                    )}
+                    {overStock && (
+                      <p className="pr-1 text-[11px] text-amber-300">
+                        موجودی قابل‌فروش این کالا فقط {formatNumber(variant.total_available)} عدد است.
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
+
+            {Object.keys(draftTotals).length > 0 && (
+              <div className="mt-3 flex flex-wrap justify-end gap-x-4 gap-y-1 border-t border-white/[0.06] pt-3">
+                {Object.entries(draftTotals).map(([currency, amount]) => (
+                  <span key={currency} className="text-xs font-bold text-text">
+                    جمع کل: {formatMoney(amount, currency)}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <Field label="یادداشت (اختیاری)">

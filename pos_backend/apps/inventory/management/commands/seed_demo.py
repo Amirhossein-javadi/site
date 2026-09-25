@@ -17,7 +17,7 @@ from apps.catalog.models import Brand, Category, Product, ProductVariant
 from apps.contracts.models import Contract
 from apps.inventory import services
 from apps.inventory.models import Warehouse
-from apps.tenants.models import Company
+from apps.tenants.models import Company, AgentCompany
 
 
 class Command(BaseCommand):
@@ -165,13 +165,21 @@ class Command(BaseCommand):
                 note="داده اولیه توسعه",
             )
 
+        # --- نمایندگان ---
+        agent1, _ = AgentCompany.objects.get_or_create(
+            tenant=company, name="شرکت توسعه فناوری نگین رسا"
+        )
+        agent2, _ = AgentCompany.objects.get_or_create(
+            tenant=company, name="بازرگانی پرداخت البرز"
+        )
+
         # --- قراردادهای نمونه ---
         Contract.objects.get_or_create(
             number="CT-2026-001",
             defaults=dict(
                 tenant=company,
                 title="قرارداد تامین نمایندگی مرکزی",
-                agent_name="شرکت توسعه فناوری نگین رسا",
+                agent=agent1,
                 device_cap=500,
                 end_date=datetime.date(2026, 12, 21),
                 status=Contract.Status.ACTIVE,
@@ -182,7 +190,7 @@ class Command(BaseCommand):
             defaults=dict(
                 tenant=company,
                 title="قرارداد تامین نمایندگی منطقه‌ای",
-                agent_name="بازرگانی پرداخت البرز",
+                agent=agent2,
                 device_cap=200,
                 end_date=datetime.date(2027, 2, 4),
                 status=Contract.Status.ACTIVE,

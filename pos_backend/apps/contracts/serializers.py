@@ -1,11 +1,9 @@
 from rest_framework import serializers
-
 from .models import Contract
 
-
 class ContractSerializer(serializers.ModelSerializer):
-    company = serializers.CharField(source="agent_name")
-    status = serializers.CharField(source="get_status_display")
+    company = serializers.CharField(source="agent.name", read_only=True)
+    status = serializers.CharField(source="get_status_display", read_only=True)
 
     class Meta:
         model = Contract
