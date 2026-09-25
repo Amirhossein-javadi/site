@@ -15,7 +15,7 @@ class ContractViewSet(viewsets.ReadOnlyModelViewSet):
     فقط qs مربوط به request.tenant را برگرداند.
     """
 
-    queryset = Contract.objects.select_related("tenant").all()
+    queryset = Contract.objects.select_related("tenant", "agent").all()
     serializer_class = ContractSerializer
     filter_backends = [SearchFilter]
-    search_fields = ["number", "title", "agent_name"]
+    search_fields = ["number", "title", "agent__name"]
