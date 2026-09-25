@@ -124,7 +124,7 @@ def place_order(*, contract, warehouse: Warehouse, items: list, user=None, notes
         variant = entry["variant"]
         quantity = entry["quantity"]
 
-inventory_services.reserve_stock(
+        inventory_services.reserve_stock(
             warehouse=warehouse,
             variant=variant,
             quantity=quantity,
