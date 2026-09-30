@@ -14,8 +14,8 @@ import {
 export function Card({ className = "", children, glow = false, ...props }) {
   return (
     <div
-      className={`rounded-[22px] border border-white/[0.075] bg-surface/80 shadow-card backdrop-blur-xl transition-all duration-300 ${
-        glow ? "hover:-translate-y-0.5 hover:border-white/[0.13] hover:shadow-card-lg" : ""
+      className={`rounded-[20px] border border-border/20 bg-surface/95 shadow-card backdrop-blur-xl transition-all duration-300 ${
+        glow ? "hover:-translate-y-0.5 hover:border-accent/35 hover:shadow-card-lg" : ""
       } ${className}`}
       {...props}
     >
@@ -27,19 +27,19 @@ export function Card({ className = "", children, glow = false, ...props }) {
 export function Badge({ children, tone = "accent", dot = false, className = "" }) {
   const tones = {
     accent: "bg-accent-soft text-frost ring-accent/15",
-    neutral: "bg-white/[0.055] text-text-muted ring-white/10",
-    success: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/15",
-    warn: "bg-amber-400/10 text-amber-300 ring-amber-400/15",
-    danger: "bg-rose-400/10 text-rose-300 ring-rose-400/15",
-    frost: "bg-sky-400/10 text-sky-200 ring-sky-400/15",
+    neutral: "bg-ink/[0.055] text-text-muted ring-ink/10",
+    success: "bg-success/10 text-success ring-success/15",
+    warn: "bg-warning/10 text-warning ring-warning/15",
+    danger: "bg-danger/10 text-danger ring-danger/15",
+    frost: "bg-accent/10 text-accent ring-accent/15",
   };
   const dots = {
     accent: "bg-frost",
     neutral: "bg-text-muted",
-    success: "bg-emerald-300",
-    warn: "bg-amber-300",
-    danger: "bg-rose-300",
-    frost: "bg-sky-200",
+    success: "bg-success",
+    warn: "bg-warning",
+    danger: "bg-danger",
+    frost: "bg-accent",
   };
   return (
     <span
@@ -66,12 +66,12 @@ export function Button({
     "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl font-semibold transition-all duration-200 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45";
   const variants = {
     primary:
-      "bg-white text-[#0a0c11] shadow-[0_8px_30px_-12px_rgba(255,255,255,.55)] hover:bg-frost hover:-translate-y-0.5",
+      "bg-accent text-[#05243a] shadow-[0_8px_28px_-12px_rgba(20,169,218,.65)] hover:bg-sky-500 hover:-translate-y-0.5",
     secondary:
-      "border border-white/10 bg-white/[0.055] text-text hover:border-white/15 hover:bg-white/[0.085]",
-    ghost: "text-text-muted hover:bg-white/[0.055] hover:text-text",
+      "border border-border/25 bg-surface2 text-text hover:border-accent/35 hover:bg-surface3",
+    ghost: "text-text-muted hover:bg-ink/[0.055] hover:text-text",
     danger:
-      "border border-rose-400/15 bg-rose-400/10 text-rose-300 hover:bg-rose-400/15",
+      "border border-danger/20 bg-danger/10 text-danger hover:bg-danger/15",
   };
   const sizes = {
     sm: "px-3 py-2 text-xs",
@@ -100,7 +100,7 @@ export function IconButton({ label, children, className = "", ...props }) {
     <button
       aria-label={label}
       title={label}
-      className={`flex h-9 w-9 items-center justify-center rounded-xl text-text-muted transition-all hover:bg-white/[0.065] hover:text-text active:scale-95 ${className}`}
+      className={`flex h-9 w-9 items-center justify-center rounded-xl text-text-muted transition-all hover:bg-ink/[0.065] hover:text-text active:scale-95 ${className}`}
       {...props}
     >
       {children}
@@ -152,7 +152,7 @@ export function SectionHeader({ title, subtitle, action }) {
 export function EmptyState({ icon: Icon = Inbox, title, description, action }) {
   return (
     <Card className="flex min-h-64 flex-col items-center justify-center px-6 py-14 text-center">
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.055] text-text-muted ring-1 ring-inset ring-white/10">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent ring-1 ring-inset ring-accent/20">
         <Icon size={21} strokeWidth={1.8} />
       </div>
       <p className="text-sm font-bold text-text">{title}</p>
@@ -183,7 +183,7 @@ export function TableSkeleton({ rows = 6, cols = 5 }) {
 export function ErrorState({ message, onRetry }) {
   return (
     <Card className="flex min-h-64 flex-col items-center justify-center px-6 py-14 text-center">
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-400/10 text-rose-300 ring-1 ring-inset ring-rose-400/15">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-danger/10 text-danger ring-1 ring-inset ring-danger/20">
         <AlertCircle size={21} />
       </div>
       <p className="text-sm font-bold text-text">بارگذاری اطلاعات انجام نشد</p>
@@ -205,7 +205,7 @@ export function DataTable({ columns, children, compact = false }) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[720px] text-sm">
           <thead>
-            <tr className="border-b border-white/[0.07] bg-white/[0.025] text-right text-text-muted">
+            <tr className="border-b border-ink/[0.07] bg-ink/[0.025] text-right text-text-muted">
               {columns.map((c) => (
                 <th
                   key={typeof c === "string" ? c : c.label}
@@ -229,8 +229,8 @@ export function Row({ children, onClick, className = "" }) {
   return (
     <tr
       onClick={onClick}
-      className={`border-b border-white/[0.055] transition-colors last:border-0 ${
-        onClick ? "cursor-pointer hover:bg-white/[0.035]" : "hover:bg-white/[0.02]"
+      className={`border-b border-ink/[0.055] transition-colors last:border-0 ${
+        onClick ? "cursor-pointer hover:bg-ink/[0.035]" : "hover:bg-ink/[0.02]"
       } ${className}`}
     >
       {children}
@@ -261,7 +261,7 @@ export function SearchInput({ value, onChange, placeholder, className = "" }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="h-10 w-full rounded-xl border border-white/[0.08] bg-white/[0.045] pr-10 pl-3 text-sm text-text outline-none transition-all placeholder:text-text-faint focus:border-white/[0.17] focus:bg-white/[0.065] focus:ring-4 focus:ring-white/[0.025]"
+        className="h-10 w-full rounded-xl border border-ink/[0.08] bg-ink/[0.045] pr-10 pl-3 text-sm text-text outline-none transition-all placeholder:text-text-faint focus:border-accent focus:bg-surface focus:ring-4 focus:ring-accent/10"
       />
     </div>
   );
@@ -273,7 +273,7 @@ export function Select({ value, onChange, options, className = "", ...props }) {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-10 w-full appearance-none rounded-xl border border-white/[0.08] bg-surface2 py-2 pr-3.5 pl-9 text-sm text-text outline-none transition-all focus:border-white/[0.17] focus:ring-4 focus:ring-white/[0.025]"
+        className="h-10 w-full appearance-none rounded-xl border border-ink/[0.08] bg-surface2 py-2 pr-3.5 pl-9 text-sm text-text outline-none transition-all focus:border-accent focus:ring-4 focus:ring-accent/10"
         {...props}
       >
         {options.map((o) => (
@@ -296,7 +296,7 @@ export function Field({ label, hint, error, children, className = "" }) {
       <span className="mb-2 block text-xs font-bold text-text-muted">{label}</span>
       {children}
       {error ? (
-        <span className="mt-1.5 block text-xs text-rose-300">{error}</span>
+        <span className="mt-1.5 block text-xs text-danger">{error}</span>
       ) : hint ? (
         <span className="mt-1.5 block text-xs text-text-faint">{hint}</span>
       ) : null}
@@ -307,7 +307,7 @@ export function Field({ label, hint, error, children, className = "" }) {
 export function Input({ className = "", ...props }) {
   return (
     <input
-      className={`h-11 w-full rounded-xl border border-white/[0.08] bg-white/[0.045] px-3.5 text-sm text-text outline-none transition-all placeholder:text-text-faint focus:border-white/[0.18] focus:bg-white/[0.065] focus:ring-4 focus:ring-white/[0.025] ${className}`}
+      className={`h-11 w-full rounded-xl border border-ink/[0.08] bg-ink/[0.045] px-3.5 text-sm text-text outline-none transition-all placeholder:text-text-faint focus:border-accent focus:bg-surface focus:ring-4 focus:ring-accent/10 ${className}`}
       {...props}
     />
   );
@@ -316,7 +316,7 @@ export function Input({ className = "", ...props }) {
 export function Textarea({ className = "", ...props }) {
   return (
     <textarea
-      className={`min-h-24 w-full resize-y rounded-xl border border-white/[0.08] bg-white/[0.045] px-3.5 py-3 text-sm text-text outline-none transition-all placeholder:text-text-faint focus:border-white/[0.18] focus:bg-white/[0.065] focus:ring-4 focus:ring-white/[0.025] ${className}`}
+      className={`min-h-24 w-full resize-y rounded-xl border border-ink/[0.08] bg-ink/[0.045] px-3.5 py-3 text-sm text-text outline-none transition-all placeholder:text-text-faint focus:border-accent focus:bg-surface focus:ring-4 focus:ring-accent/10 ${className}`}
       {...props}
     />
   );
@@ -324,14 +324,14 @@ export function Textarea({ className = "", ...props }) {
 
 export function SegmentedControl({ value, onChange, options }) {
   return (
-    <div className="inline-flex rounded-xl border border-white/[0.08] bg-white/[0.035] p-1">
+    <div className="inline-flex rounded-xl border border-ink/[0.08] bg-ink/[0.035] p-1">
       {options.map((o) => (
         <button
           key={o.value}
           onClick={() => onChange(o.value)}
           className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
             value === o.value
-              ? "bg-white/[0.11] text-text shadow-sm"
+              ? "bg-ink/[0.11] text-text shadow-sm"
               : "text-text-muted hover:text-text"
           }`}
         >
@@ -363,8 +363,8 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
         onClick={onClose}
         aria-label="بستن"
       />
-      <div className={`glass-strong relative max-h-[92vh] w-full overflow-hidden rounded-t-[28px] border border-white/10 shadow-card-lg sm:rounded-[28px] ${widths[size]}`}>
-        <div className="flex items-start justify-between gap-4 border-b border-white/[0.07] px-5 py-5 sm:px-6">
+      <div className={`glass-strong relative max-h-[92vh] w-full overflow-hidden rounded-t-[28px] border border-ink/10 shadow-card-lg sm:rounded-[28px] ${widths[size]}`}>
+        <div className="flex items-start justify-between gap-4 border-b border-ink/[0.07] px-5 py-5 sm:px-6">
           <div>
             <h2 className="text-lg font-extrabold text-text">{title}</h2>
             {subtitle && <p className="mt-1 text-xs leading-5 text-text-muted">{subtitle}</p>}
@@ -374,7 +374,7 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
           </IconButton>
         </div>
         <div className="max-h-[calc(92vh-9rem)] overflow-y-auto px-5 py-5 sm:px-6">{children}</div>
-        {footer && <div className="border-t border-white/[0.07] px-5 py-4 sm:px-6">{footer}</div>}
+        {footer && <div className="border-t border-ink/[0.07] px-5 py-4 sm:px-6">{footer}</div>}
       </div>
     </div>
   );
@@ -402,9 +402,9 @@ export function Drawer({ open, onClose, title, subtitle, children }) {
         className={`absolute inset-0 bg-black/65 backdrop-blur-sm transition-opacity ${open ? "opacity-100" : "opacity-0"}`}
       />
       <aside
-        className={`glass-strong absolute inset-y-0 left-0 flex w-full max-w-xl flex-col border-r border-white/10 shadow-card-lg transition-transform duration-300 ease-out ${open ? "translate-x-0" : "-translate-x-full"}`}
+        className={`glass-strong absolute inset-y-0 left-0 flex w-full max-w-xl flex-col border-r border-ink/10 shadow-card-lg transition-transform duration-300 ease-out ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-white/[0.07] px-5 py-5 sm:px-6">
+        <div className="flex items-start justify-between gap-4 border-b border-ink/[0.07] px-5 py-5 sm:px-6">
           <div>
             <h2 className="text-lg font-extrabold text-text">{title}</h2>
             {subtitle && <p className="mt-1 text-xs text-text-muted">{subtitle}</p>}
@@ -419,14 +419,14 @@ export function Drawer({ open, onClose, title, subtitle, children }) {
 
 export function StatCard({ label, value, meta, icon: Icon, tone = "accent" }) {
   const tones = {
-    accent: "bg-white/[0.07] text-frost",
-    success: "bg-emerald-400/10 text-emerald-300",
-    warn: "bg-amber-400/10 text-amber-300",
-    frost: "bg-sky-400/10 text-sky-200",
+    accent: "bg-ink/[0.07] text-frost",
+    success: "bg-success/10 text-success",
+    warn: "bg-warning/10 text-warning",
+    frost: "bg-accent/10 text-accent",
   };
   return (
     <Card glow className="relative overflow-hidden p-5">
-      <div className="absolute -left-8 -top-8 h-24 w-24 rounded-full bg-white/[0.035] blur-2xl" />
+      <div className="absolute -left-8 -top-8 h-24 w-24 rounded-full bg-ink/[0.035] blur-2xl" />
       <div className="relative flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold text-text-muted">{label}</p>
@@ -443,7 +443,7 @@ export function StatCard({ label, value, meta, icon: Icon, tone = "accent" }) {
 
 export function DetailItem({ label, value, mono = false }) {
   return (
-    <div className="rounded-2xl bg-white/[0.035] p-4 ring-1 ring-inset ring-white/[0.06]">
+    <div className="rounded-2xl bg-ink/[0.035] p-4 ring-1 ring-inset ring-ink/[0.06]">
       <p className="text-[11px] font-semibold text-text-faint">{label}</p>
       <p className={`mt-1.5 text-sm font-semibold text-text ${mono ? "font-mono" : ""}`}>{value ?? "—"}</p>
     </div>

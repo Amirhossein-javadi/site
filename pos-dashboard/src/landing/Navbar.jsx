@@ -39,14 +39,14 @@ export default function Navbar() {
         <nav className="hidden items-center gap-8 md:flex">
           {LINKS.map((l) => (
             <a key={l.id} href={`#${l.id}`} onClick={(e) => { e.preventDefault(); goTo(l.id); }}
-              className="text-xs text-white/60 transition-colors hover:text-white">
+              className="text-xs text-ink/60 transition-colors hover:text-white">
               {l.label}
             </a>
           ))}
         </nav>
 
         <Link to="/login"
-          className="rounded-full bg-white px-4 py-1.5 text-xs font-bold text-black transition-all hover:ring-4 hover:ring-white/25 focus-visible:ring-4 focus-visible:ring-white/25">
+          className="rounded-full bg-white px-4 py-1.5 text-xs font-bold text-black transition-all hover:ring-4 hover:ring-ink/25 focus-visible:ring-4 focus-visible:ring-ink/25">
           ورود به سیستم
         </Link>
       </div>

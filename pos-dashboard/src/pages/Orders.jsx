@@ -332,7 +332,7 @@ function OrderDrawer({ orderId, onClose, onChanged, toast }) {
 
           <div>
             <SectionHeader title="اقلام سفارش" />
-            <Card className="divide-y divide-white/[0.055] overflow-hidden">
+            <Card className="divide-y divide-ink/[0.055] overflow-hidden">
               {order.items.map((item) => (
                 <div key={item.id} className="flex items-center gap-3 px-4 py-3.5">
                   <div className="min-w-0 flex-1">
@@ -366,10 +366,10 @@ function OrderDrawer({ orderId, onClose, onChanged, toast }) {
 
           <div>
             <SectionHeader title="تاریخچه وضعیت" />
-            <ol className="relative space-y-4 border-r border-white/[0.08] pr-5">
+            <ol className="relative space-y-4 border-r border-ink/[0.08] pr-5">
               {order.status_history.map((entry) => (
                 <li key={entry.id} className="relative">
-                  <span className="absolute -right-[23px] top-1.5 h-2 w-2 rounded-full bg-white/40" />
+                  <span className="absolute -right-[23px] top-1.5 h-2 w-2 rounded-full bg-ink/40" />
                   <p className="text-xs font-bold text-text">
                     {entry.from_status_label} ← {entry.to_status_label}
                   </p>
@@ -520,7 +520,7 @@ function CreateOrderModal({ open, onClose, onCreated, toast }) {
       {status === "ready" && options && (
         <form id="create-order" onSubmit={handleSubmit} className="space-y-5">
           {!hasValidContracts && (
-            <p className="rounded-xl bg-amber-400/10 px-4 py-3 text-xs leading-5 text-amber-200">
+            <p className="rounded-xl bg-warning/10 px-4 py-3 text-xs leading-5 text-warning">
               قرارداد فعالی برای ثبت سفارش وجود ندارد.
             </p>
           )}
@@ -611,7 +611,7 @@ function CreateOrderModal({ open, onClose, onCreated, toast }) {
                         aria-label="حذف قلم"
                         disabled={items.length === 1}
                         onClick={() => setItems((list) => list.filter((_, i) => i !== index))}
-                        className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-text-faint transition-colors hover:bg-rose-400/10 hover:text-rose-300 disabled:opacity-30"
+                        className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-text-faint transition-colors hover:bg-danger/10 hover:text-danger disabled:opacity-30"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -628,12 +628,12 @@ function CreateOrderModal({ open, onClose, onCreated, toast }) {
                       </div>
                     )}
                     {belowMin && (
-                      <p className="pr-1 text-[11px] text-amber-300">
+                      <p className="pr-1 text-[11px] text-warning">
                         حداقل تعداد سفارش برای این کالا {formatNumber(minQty)} عدد است.
                       </p>
                     )}
                     {overStock && (
-                      <p className="pr-1 text-[11px] text-amber-300">
+                      <p className="pr-1 text-[11px] text-warning">
                         موجودی قابل‌فروش این کالا فقط {formatNumber(variant.total_available)} عدد است.
                       </p>
                     )}
@@ -643,7 +643,7 @@ function CreateOrderModal({ open, onClose, onCreated, toast }) {
             </div>
 
             {Object.keys(draftTotals).length > 0 && (
-              <div className="mt-3 flex flex-wrap justify-end gap-x-4 gap-y-1 border-t border-white/[0.06] pt-3">
+              <div className="mt-3 flex flex-wrap justify-end gap-x-4 gap-y-1 border-t border-ink/[0.06] pt-3">
                 {Object.entries(draftTotals).map(([currency, amount]) => (
                   <span key={currency} className="text-xs font-bold text-text">
                     جمع کل: {formatMoney(amount, currency)}
