@@ -139,13 +139,13 @@ export const api = {
     post(`/orders/${id}/transition/`, { to_status: toStatus, note }),
 
   // --- قیمت‌گذاری و پیش‌فاکتور ---
-  getProformas: () => getList("/proforma-invoices/"),
+  getProformas: (params) => getList("/proforma-invoices/", params),
   getProforma: (id) => request(`/proforma-invoices/${id}/`),
   issueProforma: (orderId) => post("/proforma-invoices/issue/", { order: orderId }),
   getExchangeRates: () => getList("/exchange-rates/"),
 
   // --- پرداخت ---
-  getPayments: () => getList("/payments/"),
+  getPayments: (params) => getList("/payments/", params),
   createPaymentIntent: ({ proforma, idempotencyKey, gateway = "mock" }) =>
     post("/payments/create/", {
       proforma,

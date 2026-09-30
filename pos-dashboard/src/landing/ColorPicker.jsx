@@ -15,7 +15,7 @@ export default function ColorPicker() {
     <section id="customizer" className="px-5 py-28 sm:py-40">
       <div className="mx-auto max-w-5xl text-center">
         <h2 className="bg-gradient-to-b from-white to-white/50 bg-clip-text pb-1 text-4xl font-extrabold tracking-tight text-transparent sm:text-6xl">پنل، با رنگ شما.</h2>
-        <p className="mx-auto mt-5 max-w-xl text-base leading-8 text-white/60 sm:text-lg">رنگ تاکیدی را انتخاب کنید و پیش‌نمایش را ببینید.</p>
+        <p className="mx-auto mt-5 max-w-xl text-base leading-8 text-ink/60 sm:text-lg">رنگ تاکیدی را انتخاب کنید و پیش‌نمایش را ببینید.</p>
 
         <div className="relative mt-14">
           <AnimatePresence>
@@ -23,7 +23,7 @@ export default function ColorPicker() {
               initial={{ opacity: 0 }} animate={{ opacity: 0.28 }} exit={{ opacity: 0 }} transition={{ duration: 0.7 }}
               style={{ background: active.hex }} />
           </AnimatePresence>
-          <motion.div layout className="relative rounded-[28px] bg-[#161617] p-2 ring-1 ring-white/10 sm:p-3">
+          <motion.div layout className="relative rounded-[28px] bg-[#161617] p-2 ring-1 ring-ink/10 sm:p-3">
             <DashboardMock accent={active.hex} />
           </motion.div>
         </div>
@@ -45,8 +45,8 @@ export default function ColorPicker() {
           <AnimatePresence mode="wait">
             <motion.div key={active.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.25 }}>
               <p className="text-lg font-bold text-white">{active.name}</p>
-              <p dir="ltr" className="mt-1 font-mono text-xs text-white/40">{active.hex}</p>
-              <p className="mt-2 text-sm leading-7 text-white/60">{active.note}</p>
+              <p dir="ltr" className="mt-1 font-mono text-xs text-ink/40">{active.hex}</p>
+              <p className="mt-2 text-sm leading-7 text-ink/60">{active.note}</p>
             </motion.div>
           </AnimatePresence>
         </div>

@@ -72,7 +72,7 @@ export default function Inventory() {
                 onClick={() => setTab(t.key)}
                 className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all duration-200 ${
                   tab === t.key
-                    ? "bg-accent text-white shadow-md shadow-accent/20"
+                    ? "bg-accent text-[#05243a] shadow-md shadow-accent/20"
                     : "bg-surface2 text-text-muted hover:bg-border hover:text-text"
                 }`}
               >

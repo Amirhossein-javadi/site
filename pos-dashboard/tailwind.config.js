@@ -4,20 +4,24 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: "#07090f",
-        surface: "#12161f",
-        surface2: "#171c27",
-        surface3: "#1d2331",
-        border: "#212637",
-        "border-soft": "rgba(231, 233, 238, 0.08)",
-        accent: "#8fa8bd",
-        accentDim: "#6f8699",
-        accent2: "#3d4a5c",
-        "accent-soft": "rgba(143, 168, 189, 0.14)",
-        frost: "#c9d6de",
-        text: "#eef0f5",
-        "text-muted": "#8b93a7",
-        "text-faint": "#5b6272",
+        bg: "rgb(var(--color-bg) / <alpha-value>)",
+        surface: "rgb(var(--color-surface) / <alpha-value>)",
+        surface2: "rgb(var(--color-surface-2) / <alpha-value>)",
+        surface3: "rgb(var(--color-surface-3) / <alpha-value>)",
+        border: "rgb(var(--color-border) / <alpha-value>)",
+        "border-soft": "rgb(var(--color-border) / 0.12)",
+        accent: "rgb(var(--color-accent) / <alpha-value>)",
+        accentDim: "rgb(var(--color-accent-dim) / <alpha-value>)",
+        accent2: "rgb(var(--color-accent-2) / <alpha-value>)",
+        "accent-soft": "rgb(var(--color-accent) / 0.14)",
+        frost: "rgb(var(--color-frost) / <alpha-value>)",
+        text: "rgb(var(--color-text) / <alpha-value>)",
+        "text-muted": "rgb(var(--color-text-muted) / <alpha-value>)",
+        "text-faint": "rgb(var(--color-text-faint) / <alpha-value>)",
+        ink: "rgb(var(--color-ink) / <alpha-value>)",
+        success: "rgb(var(--color-success) / <alpha-value>)",
+        warning: "rgb(var(--color-warning) / <alpha-value>)",
+        danger: "rgb(var(--color-danger) / <alpha-value>)",
       },
       fontFamily: {
         sans: ["Vazirmatn", "-apple-system", "system-ui", "sans-serif"],
@@ -28,7 +32,7 @@ export default {
         "3xl": "1.75rem",
       },
       backgroundImage: {
-        "accent-gradient": "linear-gradient(135deg, #d3dfe6 0%, #4b5a6c 100%)",
+        "accent-gradient": "linear-gradient(135deg, #127ebc 0%, #1668d2 100%)",
         "accent-gradient-soft":
           "linear-gradient(135deg, rgba(211,223,230,0.14) 0%, rgba(75,90,108,0.2) 100%)",
         "surface-sheen":

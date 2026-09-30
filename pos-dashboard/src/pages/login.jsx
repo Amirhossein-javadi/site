@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { Button, Field, Input } from "../components/ui";
+import ThemeToggle from "../components/ThemeToggle";
 import { api } from "../lib/api";
 import { isAuthenticated, setToken } from "../lib/auth";
 
@@ -43,21 +44,25 @@ export default function Login() {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg px-5 py-20 text-text">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-[42%] h-[540px] w-[540px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.045] blur-[120px]" />
+        <div className="absolute left-1/2 top-[42%] h-[540px] w-[540px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink/[0.045] blur-[120px]" />
         <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-accent/10 blur-[120px]" />
       </div>
 
       <Link
         to="/"
-        className="absolute right-5 top-5 z-10 flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-text-muted transition-colors hover:bg-white/5 hover:text-text sm:right-8 sm:top-7"
+        className="absolute right-5 top-5 z-10 flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-text-muted transition-colors hover:bg-ink/5 hover:text-text sm:right-8 sm:top-7"
       >
         <ArrowRight size={15} />
         صفحه اصلی
       </Link>
 
-      <section className="glass-strong relative z-10 w-full max-w-[430px] rounded-[30px] border border-white/10 p-6 shadow-card-lg sm:p-9">
+      <div className="absolute left-5 top-5 z-10 sm:left-8 sm:top-7">
+        <ThemeToggle />
+      </div>
+
+      <section className="glass-strong relative z-10 w-full max-w-[430px] rounded-[30px] border border-ink/10 p-6 shadow-card-lg sm:p-9">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-[18px] bg-white text-bg shadow-[0_12px_45px_-15px_rgba(255,255,255,.7)]">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-[18px] bg-accent-gradient text-white shadow-[0_12px_45px_-15px_rgba(18,166,222,.7)]">
             <LockKeyhole size={24} strokeWidth={2} />
           </div>
           <h1 className="text-xl font-extrabold tracking-tight">ورود به مرکز عملیات</h1>
@@ -95,7 +100,7 @@ export default function Login() {
                 type="button"
                 aria-label={showPassword ? "پنهان کردن رمز" : "نمایش رمز"}
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute left-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-text-faint transition-colors hover:bg-white/5 hover:text-text"
+                className="absolute left-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-text-faint transition-colors hover:bg-ink/5 hover:text-text"
               >
                 {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
               </button>
@@ -105,7 +110,7 @@ export default function Login() {
           {error && (
             <p
               role="alert"
-              className="rounded-xl bg-rose-400/10 px-4 py-3 text-xs leading-5 text-rose-300 ring-1 ring-inset ring-rose-400/15"
+              className="rounded-xl bg-danger/10 px-4 py-3 text-xs leading-5 text-danger ring-1 ring-inset ring-danger/15"
             >
               {error}
             </p>

@@ -23,11 +23,14 @@ class ProductVariantSerializer(serializers.ModelSerializer):
 
     currency_label = serializers.CharField(source="get_currency_display", read_only=True)
     total_available = serializers.IntegerField(read_only=True)
+    product_name = serializers.CharField(source="product.name", read_only=True)
+    tenant_id = serializers.IntegerField(source="product.tenant_id", read_only=True)
 
     class Meta:
         model = ProductVariant
         fields = [
             "id",
+            "product_name",
             "name",
             "sku",
             "barcode",
@@ -39,6 +42,7 @@ class ProductVariantSerializer(serializers.ModelSerializer):
             "lead_time_days",
             "is_active",
             "total_available",
+            "tenant_id",
         ]
 
 

@@ -13,6 +13,7 @@ import Orders from "./pages/Orders";
 import Proformas from "./pages/Proformas";
 import Payments from "./pages/Payments";
 import Credits from "./pages/Credits";
+import ThemeToggle from "./components/ThemeToggle";
 
 const PAGE_COMPONENTS = {
   "/dashboard": Dashboard,
@@ -67,6 +68,7 @@ export default function App() {
 function NotFound() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-bg px-6 text-center text-text">
+      <div className="absolute left-6 top-6"><ThemeToggle /></div>
       <p className="text-7xl font-black tracking-tighter text-gradient">۴۰۴</p>
       <h1 className="text-lg font-bold">این صفحه وجود ندارد</h1>
       <p className="text-sm text-text-muted">
@@ -74,7 +76,7 @@ function NotFound() {
       </p>
       <a
         href="/"
-        className="mt-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-bg transition-transform hover:-translate-y-0.5"
+        className="mt-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-[#05243a] transition-transform hover:-translate-y-0.5"
       >
         بازگشت به صفحه اصلی
       </a>

@@ -15,8 +15,8 @@ function StockVisual() {
     <Panel>
       {rows.map(([l, v], i) => (
         <div key={l}>
-          <div className="mb-1.5 flex justify-between text-xs text-white/60"><span>{l}</span><span>{v.toLocaleString("fa-IR")}٪</span></div>
-          <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
+          <div className="mb-1.5 flex justify-between text-xs text-ink/60"><span>{l}</span><span>{v.toLocaleString("fa-IR")}٪</span></div>
+          <div className="h-2.5 overflow-hidden rounded-full bg-ink/10">
             <motion.div className="h-full origin-right rounded-full bg-accent" initial={{ scaleX: 0 }} animate={{ scaleX: v / 100 }} transition={{ delay: 0.1 * i, duration: 0.9, ease: [0.16, 1, 0.3, 1] }} style={{ width: "100%" }} />
           </div>
         </div>
@@ -34,7 +34,7 @@ function ContractVisual() {
           <motion.circle cx="60" cy="60" r="50" fill="none" stroke="#8fa8bd" strokeWidth="9" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 0.72 }} transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }} />
         </svg>
         <p className="-mt-24 mb-14 text-2xl font-extrabold text-white">۷۲٪</p>
-        <p className="text-xs text-white/50">مصرف سقف دستگاه قرارداد</p>
+        <p className="text-xs text-ink/50">مصرف سقف دستگاه قرارداد</p>
       </div>
     </Panel>
   );
@@ -46,7 +46,7 @@ function FlowVisual() {
     <Panel>
       {nodes.map((n, i) => (
         <motion.div key={n} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.12 * i, duration: 0.6 }}
-          className="flex items-center gap-3 rounded-xl bg-white/5 px-4 py-3 text-sm text-white">
+          className="flex items-center gap-3 rounded-xl bg-ink/5 px-4 py-3 text-sm text-white">
           <span className="h-2 w-2 rounded-full bg-accent" />{n}
         </motion.div>
       ))}
@@ -72,15 +72,15 @@ export default function FeatureShowcase() {
             <AnimatePresence mode="wait">
               <motion.div key={idx} initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}>
                 <h2 className="bg-gradient-to-b from-white to-white/50 bg-clip-text pb-1 text-3xl font-extrabold leading-tight text-transparent sm:text-5xl">{STEPS[idx].title}</h2>
-                <p className="mt-5 max-w-md text-base leading-8 text-white/60 sm:text-lg">{STEPS[idx].body}</p>
+                <p className="mt-5 max-w-md text-base leading-8 text-ink/60 sm:text-lg">{STEPS[idx].body}</p>
               </motion.div>
             </AnimatePresence>
-            <div className="mt-8 h-1 w-40 overflow-hidden rounded-full bg-white/10">
+            <div className="mt-8 h-1 w-40 overflow-hidden rounded-full bg-ink/10">
               <motion.div className="h-full origin-right rounded-full bg-white" style={{ scaleX: fill, width: "100%" }} />
             </div>
           </div>
 
-          <div className="aspect-[4/3] overflow-hidden rounded-3xl bg-[#161617] ring-1 ring-white/10">
+          <div className="aspect-[4/3] overflow-hidden rounded-3xl bg-[#161617] ring-1 ring-ink/10">
             <AnimatePresence mode="wait">
               <motion.div key={idx} className="h-full" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }} transition={{ duration: 0.35 }}>
                 <Visual />

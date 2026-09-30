@@ -8,6 +8,47 @@
 @tailwind components;
 @tailwind utilities;
 
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: 7 19 35;
+  --color-surface: 14 31 51;
+  --color-surface-2: 20 42 66;
+  --color-surface-3: 27 54 82;
+  --color-border: 103 139 173;
+  --color-accent: 27 183 230;
+  --color-accent-dim: 24 132 197;
+  --color-accent-2: 21 76 127;
+  --color-frost: 122 223 250;
+  --color-text: 239 247 255;
+  --color-text-muted: 157 180 201;
+  --color-text-faint: 107 135 160;
+  --color-ink: 239 247 255;
+  --color-success: 74 222 128;
+  --color-warning: 252 211 77;
+  --color-danger: 253 164 175;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: 239 247 252;
+  --color-surface: 255 255 255;
+  --color-surface-2: 246 251 255;
+  --color-surface-3: 231 243 251;
+  --color-border: 145 176 198;
+  --color-accent: 9 145 202;
+  --color-accent-dim: 22 112 175;
+  --color-accent-2: 27 87 138;
+  --color-frost: 13 111 157;
+  --color-text: 14 38 60;
+  --color-text-muted: 81 109 131;
+  --color-text-faint: 119 146 165;
+  --color-ink: 12 42 68;
+  --color-success: 21 128 61;
+  --color-warning: 180 83 9;
+  --color-danger: 190 18 60;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -15,21 +56,22 @@
 html,
 body,
 #root {
-  height: 100%;
+  min-height: 100%;
 }
 
 body {
   margin: 0;
-  background-color: #07090f;
-  color: #eef0f5;
+  background-color: rgb(var(--color-bg));
+  color: rgb(var(--color-text));
   font-family: "Vazirmatn", -apple-system, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  transition: background-color 180ms ease, color 180ms ease;
 }
 
 ::selection {
-  background: rgba(143, 168, 189, 0.35);
-  color: #fff;
+  background: rgb(var(--color-accent) / 0.3);
+  color: rgb(var(--color-text));
 }
 
 ::-webkit-scrollbar {
@@ -40,58 +82,80 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #232838;
+  background: rgb(var(--color-border) / 0.38);
   border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #2c3247;
+  background: rgb(var(--color-border) / 0.58);
 }
 
 :focus-visible {
-  outline: 2px solid #8fa8bd;
+  outline: 2px solid rgb(var(--color-accent));
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 @layer utilities {
-  /* Frosted glass surface — the backbone of the "Apple" feel */
   .glass {
-    background: rgba(18, 22, 31, 0.6);
+    background: rgb(var(--color-surface) / 0.86);
     backdrop-filter: blur(20px) saturate(160%);
     -webkit-backdrop-filter: blur(20px) saturate(160%);
   }
   .glass-strong {
-    background: rgba(15, 18, 26, 0.82);
+    background: rgb(var(--color-surface) / 0.97);
     backdrop-filter: blur(28px) saturate(160%);
     -webkit-backdrop-filter: blur(28px) saturate(160%);
   }
-
   .text-gradient {
-    background: linear-gradient(135deg, #eef2f5 0%, #7d8fa1 100%);
+    background: linear-gradient(135deg, rgb(var(--color-text)) 0%, rgb(var(--color-accent)) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
-
   .ring-hairline {
-    box-shadow: inset 0 0 0 1px rgba(231, 233, 238, 0.08);
+    box-shadow: inset 0 0 0 1px rgb(var(--color-border) / 0.16);
   }
-
   .skeleton {
     background: linear-gradient(
       90deg,
-      #171c27 0%,
-      #1f2536 50%,
-      #171c27 100%
+      rgb(var(--color-surface-2)) 0%,
+      rgb(var(--color-surface-3)) 50%,
+      rgb(var(--color-surface-2)) 100%
     );
     background-size: 800px 100%;
   }
-
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+}
+
+.dashboard-hero {
+  color: #fff;
+  background: linear-gradient(118deg, #102d54 0%, #115a91 52%, #087d9d 100%);
+  box-shadow: 0 26px 64px -38px rgba(2, 47, 84, 0.8);
+}
+
+.dashboard-hero-orb {
+  border: 1px solid rgba(175, 235, 255, 0.22);
+  background: radial-gradient(circle at center, rgba(42, 198, 239, 0.24), rgba(42, 198, 239, 0));
+}
+
+:root[data-theme="light"] .dashboard-hero {
+  background: linear-gradient(118deg, #125087 0%, #087eaf 54%, #079bb5 100%);
+  box-shadow: 0 26px 64px -38px rgba(2, 91, 138, 0.58);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

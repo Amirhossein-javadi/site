@@ -11,10 +11,10 @@ export function DashboardMock({ accent = "#8fa8bd" }) {
   const stats = [["موجودی قابل فروش", "۱,۲۴۰"], ["رزرو شده", "۱۸۶"], ["قرارداد فعال", "۴۲"]];
   const rows = [["V72P-20418", "انبار مرکزی", "آزاد"], ["V72-11093", "نماینده ۱۴", "تحویل شده"], ["V72P-20419", "انبار مرکزی", "رزرو"], ["V72-11094", "انبار مرکزی", "آزاد"]];
   return (
-    <div dir="rtl" className="flex aspect-[16/11] w-full overflow-hidden rounded-2xl bg-[#0b0b0c] text-[10px] text-white/60 sm:aspect-[16/10] sm:text-xs">
-      <aside className="hidden w-14 shrink-0 flex-col items-center gap-3 border-e border-white/5 py-4 sm:flex">
+    <div dir="rtl" className="flex aspect-[16/11] w-full overflow-hidden rounded-2xl bg-[#0b0b0c] text-[10px] text-ink/60 sm:aspect-[16/10] sm:text-xs">
+      <aside className="hidden w-14 shrink-0 flex-col items-center gap-3 border-e border-ink/5 py-4 sm:flex">
         <span className="h-6 w-6 rounded-md" style={{ background: accent }} />
-        {[0, 1, 2, 3, 4].map((i) => <span key={i} className="h-1.5 w-6 rounded-full bg-white/10" />)}
+        {[0, 1, 2, 3, 4].map((i) => <span key={i} className="h-1.5 w-6 rounded-full bg-ink/10" />)}
       </aside>
       <div className="flex-1 space-y-3 p-3 sm:p-5">
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
@@ -30,12 +30,12 @@ export function DashboardMock({ accent = "#8fa8bd" }) {
             <div key={i} className="flex-1 rounded-sm transition-colors duration-500" style={{ height: `${h}%`, background: accent, opacity: 0.35 + i * 0.09 }} />
           ))}
         </div>
-        <div className="divide-y divide-white/5 rounded-xl bg-[#161617]">
+        <div className="divide-y divide-ink/5 rounded-xl bg-[#161617]">
           {rows.map(([a, b, c]) => (
             <div key={a} className="flex items-center justify-between px-3 py-1.5 sm:py-2">
-              <span dir="ltr" className="font-mono text-white/80">{a}</span>
+              <span dir="ltr" className="font-mono text-ink/80">{a}</span>
               <span className="hidden sm:inline">{b}</span>
-              <span className="rounded-full bg-white/5 px-2 py-0.5">{c}</span>
+              <span className="rounded-full bg-ink/5 px-2 py-0.5">{c}</span>
             </div>
           ))}
         </div>
@@ -62,14 +62,14 @@ function FilmModal({ open, onClose }) {
           <motion.div initial={{ scale: 0.92, y: 24 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 26 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative aspect-video w-full max-w-4xl overflow-hidden rounded-3xl bg-[#161617] ring-1 ring-white/10">
+            className="relative aspect-video w-full max-w-4xl overflow-hidden rounded-3xl bg-[#161617] ring-1 ring-ink/10">
             <button onClick={onClose} aria-label="بستن" className="absolute end-4 top-4 z-10 rounded-full bg-black/60 p-2 text-white hover:bg-black">
               <X size={18} />
             </button>
             {FILM_SRC ? (
               <video src={FILM_SRC} controls autoPlay className="h-full w-full" />
             ) : (
-              <div className="flex h-full items-center justify-center text-sm text-white/50">ویدیوی معرفی به‌زودی اضافه می‌شود.</div>
+              <div className="flex h-full items-center justify-center text-sm text-ink/50">ویدیوی معرفی به‌زودی اضافه می‌شود.</div>
             )}
           </motion.div>
         </motion.div>
@@ -108,15 +108,15 @@ export default function Hero() {
           فروش و انبار شما،<br />از یک پنل تحت کنترل.
         </motion.h1>
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25, duration: 0.9 }}
-          className="mx-auto mt-6 max-w-2xl text-base leading-8 text-white/60 sm:text-xl">
+          className="mx-auto mt-6 max-w-2xl text-base leading-8 text-ink/60 sm:text-xl">
           محصولات را تعریف کنید، موجودی و سریال دستگاه‌ها را پایش کنید و سفارش نمایندگان را در کسری از ثانیه مدیریت کنید.
         </motion.p>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45, duration: 0.9 }}
           className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link to="/login" className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3 text-sm font-bold text-black transition-all hover:ring-4 hover:ring-white/25">
+          <Link to="/login" className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3 text-sm font-bold text-black transition-all hover:ring-4 hover:ring-ink/25">
             ورود به سیستم <ArrowLeft size={16} />
           </Link>
-          <button onClick={() => setFilm(true)} className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white/80 ring-1 ring-white/20 transition-colors hover:bg-white/10 hover:text-white">
+          <button onClick={() => setFilm(true)} className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-ink/80 ring-1 ring-ink/20 transition-colors hover:bg-ink/10 hover:text-white">
             <Play size={14} fill="currentColor" /> تماشای معرفی
           </button>
         </motion.div>
@@ -125,7 +125,7 @@ export default function Hero() {
       <div ref={stageRef} className="relative mx-auto mt-16 max-w-5xl pb-24 [perspective:1400px] sm:mt-24">
         <motion.div style={{ scale, y: lift }} onMouseMove={onMove} onMouseLeave={onLeave}>
           <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-            className="rounded-[28px] bg-[#161617] p-2 shadow-[0_60px_120px_-30px_rgba(143,168,189,0.35)] ring-1 ring-white/10 sm:p-3">
+            className="rounded-[28px] bg-[#161617] p-2 shadow-[0_60px_120px_-30px_rgba(143,168,189,0.35)] ring-1 ring-ink/10 sm:p-3">
             <DashboardMock />
           </motion.div>
         </motion.div>

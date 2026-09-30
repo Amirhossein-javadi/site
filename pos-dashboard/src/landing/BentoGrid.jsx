@@ -22,7 +22,7 @@ function GlowCard({ className = "", children }) {
     e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
   };
   return (
-    <div onMouseMove={onMove} className={`group relative overflow-hidden rounded-3xl bg-[#161617] p-7 ring-1 ring-white/10 sm:p-9 ${className}`}>
+    <div onMouseMove={onMove} className={`group relative overflow-hidden rounded-3xl bg-[#161617] p-7 ring-1 ring-ink/10 sm:p-9 ${className}`}>
       <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
         style={{ background: "radial-gradient(360px circle at var(--mx,50%) var(--my,50%), rgba(143,168,189,0.18), transparent 70%)" }} />
       <div aria-hidden className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 ring-1 ring-accent/60 transition-opacity duration-300 group-hover:opacity-100"
@@ -44,25 +44,25 @@ export default function BentoGrid() {
         <div className="grid gap-4 md:grid-cols-3">
           <GlowCard className="md:col-span-2 md:row-span-2">
             <Big><Counter to={5000} prefix="+" /></Big>
-            <p className="mt-4 text-lg text-white/60">کالا و محصول مدیریت‌شده با قیمت، برند و موجودی لحظه‌ای.</p>
+            <p className="mt-4 text-lg text-ink/60">کالا و محصول مدیریت‌شده با قیمت، برند و موجودی لحظه‌ای.</p>
           </GlowCard>
           <GlowCard>
             <Big><Counter to={120} prefix="+" /></Big>
-            <p className="mt-3 text-white/60">نماینده و تامین‌کننده فعال.</p>
+            <p className="mt-3 text-ink/60">نماینده و تامین‌کننده فعال.</p>
           </GlowCard>
           <GlowCard>
             <Big><Counter to={100} suffix="٪" /></Big>
-            <p className="mt-3 text-white/60">دقت در رزرو و ثبت قراردادها.</p>
+            <p className="mt-3 text-ink/60">دقت در رزرو و ثبت قراردادها.</p>
           </GlowCard>
           <GlowCard className="md:col-span-2">
             <ServerCog className="mb-4 text-accent" size={28} />
             <p className="text-xl font-bold text-white">منطق کسب‌وکار در بک‌اند</p>
-            <p className="mt-2 max-w-md text-white/60">محاسبه موجودی قابل فروش، اعتبارسنجی رزرو و قیمت‌گذاری سمت سرور انجام می‌شود و پنل فقط نمایش می‌دهد.</p>
+            <p className="mt-2 max-w-md text-ink/60">محاسبه موجودی قابل فروش، اعتبارسنجی رزرو و قیمت‌گذاری سمت سرور انجام می‌شود و پنل فقط نمایش می‌دهد.</p>
           </GlowCard>
           <GlowCard>
             <Languages className="mb-4 text-accent" size={28} />
             <p className="text-xl font-bold text-white">فارسی و راست‌به‌چپ</p>
-            <p className="mt-2 text-white/60">از اعداد تا تاریخ، همه‌چیز فارسی.</p>
+            <p className="mt-2 text-ink/60">از اعداد تا تاریخ، همه‌چیز فارسی.</p>
           </GlowCard>
         </div>
       </div>

@@ -6,13 +6,13 @@ const ToastContext = createContext(null);
 const TONES = {
   success: {
     icon: CheckCircle2,
-    ring: "border-emerald-400/25",
-    tint: "text-emerald-300",
+    ring: "border-success/25",
+    tint: "text-success",
   },
   error: {
     icon: AlertCircle,
-    ring: "border-rose-400/25",
-    tint: "text-rose-300",
+    ring: "border-danger/25",
+    tint: "text-danger",
   },
 };
 

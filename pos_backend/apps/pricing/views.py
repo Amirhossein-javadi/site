@@ -27,6 +27,13 @@ class ProformaInvoiceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ProformaInvoice.objects.select_related("order").prefetch_related("lines")
     serializer_class = ProformaInvoiceSerializer
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        order_id = self.request.query_params.get("order")
+        if order_id:
+            queryset = queryset.filter(order_id=order_id)
+        return queryset
+
 
 @api_view(["POST"])
 def issue_proforma(request):

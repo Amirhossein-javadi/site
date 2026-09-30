@@ -3,6 +3,7 @@ from rest_framework import serializers
 from apps.catalog.models import ProductVariant
 from apps.contracts.models import Contract
 from apps.inventory.models import Warehouse
+from apps.pricing.models import ProformaInvoice
 
 from .models import Order, OrderItem, OrderStatusHistory
 
@@ -65,11 +66,27 @@ class OrderDetailSerializer(OrderListSerializer):
 
     items = OrderItemSerializer(many=True, read_only=True)
     status_history = OrderStatusHistorySerializer(many=True, read_only=True)
+    proforma = serializers.SerializerMethodField()
 
     class Meta(OrderListSerializer.Meta):
         fields = OrderListSerializer.Meta.fields + [
-            "notes", "stock_issued_at", "items", "status_history",
+            "notes", "stock_issued_at", "items", "status_history", "proforma",
         ]
+
+    def get_proforma(self, obj):
+        try:
+            proforma = obj.proforma_invoice
+        except ProformaInvoice.DoesNotExist:
+            return None
+        return {
+            "id": proforma.id,
+            "number": proforma.number,
+            "status": proforma.status,
+            "status_label": proforma.get_status_display(),
+            "total_irt": str(proforma.total_irt),
+            "valid_until": proforma.valid_until,
+            "is_expired": proforma.is_expired,
+        }
 
 
 class OrderItemInputSerializer(serializers.Serializer):

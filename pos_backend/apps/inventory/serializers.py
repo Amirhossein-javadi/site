@@ -6,7 +6,7 @@ from .models import DeviceSerial, InventoryItem, InventoryLedger, Warehouse
 class WarehouseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Warehouse
-        fields = ["id", "name", "code", "address", "is_active"]
+        fields = ["id", "name", "code", "address", "is_active", "tenant_id"]
 
 
 class InventoryItemSerializer(serializers.ModelSerializer):
