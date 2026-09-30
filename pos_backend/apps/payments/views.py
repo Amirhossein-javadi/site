@@ -19,8 +19,17 @@ def _error(message, code="VALIDATION_ERROR", http_status=status.HTTP_400_BAD_REQ
 
 
 class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Payment.objects.select_related("proforma", "proforma__order")
     serializer_class = PaymentSerializer
+
+    def get_queryset(self):
+        queryset = Payment.objects.select_related("proforma", "proforma__order")
+        proforma_id = self.request.query_params.get("proforma")
+        order_id = self.request.query_params.get("order")
+        if proforma_id:
+            queryset = queryset.filter(proforma_id=proforma_id)
+        if order_id:
+            queryset = queryset.filter(proforma__order_id=order_id)
+        return queryset
 
     @action(detail=True, methods=["post"])
     def verify(self, request, pk=None):

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { CheckCircle2, CreditCard, Plus, Receipt, ShoppingCart, Trash2 } from "lucide-react";
 import {
   Button,
   Card,
@@ -156,13 +156,32 @@ export default function Orders() {
 
 function OrderDrawer({ orderId, onClose, onChanged, toast }) {
   const fetcher = useCallback(
-    () => (orderId ? api.getOrder(orderId) : Promise.resolve(null)),
+    async () => {
+      if (!orderId) return null;
+      const order = await api.getOrder(orderId);
+      const payments = order.proforma
+        ? await api.getPayments({ proforma: order.proforma.id })
+        : [];
+      return { order, payments };
+    },
     [orderId]
   );
-  const { data: order, status, error, refetch } = useApi(fetcher);
+  const { data: snapshot, status, error, refetch } = useApi(fetcher);
+  const order = snapshot?.order;
+  const latestPayment = snapshot?.payments?.[0] ?? null;
 
   const transition = useMutation((id, to, note) => api.transitionOrder(id, to, note));
   const cancel = useMutation((id, note) => api.cancelOrder(id, note));
+  const issueProforma = useMutation((id) => api.issueProforma(id));
+  const startPayment = useMutation((proformaId, key) =>
+    api.createPaymentIntent({ proforma: proformaId, idempotencyKey: key })
+  );
+  const verifyPayment = useMutation((id) => api.verifyPayment(id, "success"));
+
+  async function refreshWorkflow() {
+    refetch();
+    onChanged();
+  }
 
   async function handleTransition(toStatus) {
     const result = await transition.run(order.id, toStatus, "");
@@ -186,8 +205,40 @@ function OrderDrawer({ orderId, onClose, onChanged, toast }) {
     }
   }
 
+  async function handleIssueProforma() {
+    const result = await issueProforma.run(order.id);
+    if (result.ok) {
+      toast.success("پیش‌فاکتور صادر شد.");
+      refreshWorkflow();
+    } else {
+      toast.error(result.error.message);
+    }
+  }
+
+  async function handleStartPayment() {
+    const key = globalThis.crypto?.randomUUID?.() ?? `order-${order.id}-${Date.now()}`;
+    const result = await startPayment.run(order.proforma.id, key);
+    if (result.ok) {
+      toast.success("درخواست پرداخت آزمایشی ساخته شد.");
+      refreshWorkflow();
+    } else {
+      toast.error(result.error.message);
+    }
+  }
+
+  async function handleVerifyPayment() {
+    const result = await verifyPayment.run(latestPayment.id);
+    if (result.ok) {
+      toast.success("پرداخت آزمایشی تایید شد و سفارش به‌روزرسانی شد.");
+      refreshWorkflow();
+    } else {
+      toast.error(result.error.message);
+    }
+  }
+
   const nextActions = order ? NEXT_STATUSES[order.status] ?? [] : [];
-  const busy = transition.pending || cancel.pending;
+  const busy = transition.pending || cancel.pending || issueProforma.pending ||
+    startPayment.pending || verifyPayment.pending;
 
   // جمع کل سفارش به تفکیک ارز — چون اقلام یک سفارش می‌توانند ارز متفاوت داشته باشند.
   const orderTotals = useMemo(() => {
@@ -228,7 +279,48 @@ function OrderDrawer({ orderId, onClose, onChanged, toast }) {
                 لغو سفارش
               </Button>
             )}
+            {!order.proforma && order.status !== "cancelled" && (
+              <Button size="sm" variant="secondary" icon={Receipt} loading={busy} onClick={handleIssueProforma}>
+                صدور پیش‌فاکتور
+              </Button>
+            )}
           </div>
+
+          {order.proforma && (
+            <Card className="space-y-3 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold text-text">پیش‌فاکتور {order.proforma.number}</p>
+                  <p className="mt-1 text-[11px] text-text-muted">
+                    مبلغ {formatMoney(order.proforma.total_irt, "IRT")} · اعتبار تا {formatDateTime(order.proforma.valid_until)}
+                  </p>
+                </div>
+                <StatusBadge status={order.proforma.is_expired ? "expired" : order.proforma.status} label={order.proforma.is_expired ? "منقضی‌شده" : order.proforma.status_label} />
+              </div>
+              {!order.proforma.is_expired && latestPayment?.status !== "succeeded" && (
+                <div className="flex flex-wrap gap-2">
+                  {(!latestPayment || latestPayment.status === "failed") && (
+                    <Button size="sm" variant="secondary" icon={CreditCard} loading={busy} onClick={handleStartPayment}>
+                      شروع پرداخت آزمایشی
+                    </Button>
+                  )}
+                  {latestPayment?.status === "pending" && (
+                    <Button size="sm" icon={CheckCircle2} loading={busy} onClick={handleVerifyPayment}>
+                      تایید پرداخت آزمایشی
+                    </Button>
+                  )}
+                </div>
+              )}
+              {latestPayment && (
+                <p className="text-[11px] text-text-muted">
+                  پرداخت: {latestPayment.status_label} · {latestPayment.gateway_reference}
+                </p>
+              )}
+              <p className="text-[10px] leading-5 text-text-faint">
+                درگاه فعال این پروژه Mock است؛ تایید این مرحله فقط برای گردش آزمایشی محیط توسعه است.
+              </p>
+            </Card>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <DetailItem label="قرارداد" value={order.contract_number} />
@@ -332,12 +424,10 @@ function CreateOrderModal({ open, onClose, onCreated, toast }) {
     return map;
   }, [variants]);
 
-  const variantOptions = useMemo(
-    () => [
-      { value: "", label: "انتخاب کالا" },
-      ...variants.map((v) => ({ value: String(v.id), label: `${v.name} — ${v.sku}` })),
-    ],
-    [variants]
+  const selectedContract = contracts.find((c) => String(c.id) === contract);
+  const hasValidContracts = contracts.some((c) => c.is_valid_for_ordering);
+  const availableVariants = variants.filter(
+    (v) => !selectedContract || v.tenant_id === selectedContract.tenant_id
   );
 
   // جمع کل فرم به تفکیک ارز — برای این‌که پیش از ثبت، مبلغ نهایی سفارش دیده شود.
@@ -438,14 +528,23 @@ function CreateOrderModal({ open, onClose, onCreated, toast }) {
 
       {status === "ready" && options && (
         <form id="create-order" onSubmit={handleSubmit} className="space-y-5">
+          {!hasValidContracts && (
+            <p className="rounded-xl bg-amber-400/10 px-4 py-3 text-xs leading-5 text-amber-200">
+              قرارداد فعالی برای ثبت سفارش وجود ندارد.
+            </p>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="قرارداد">
               <Select
                 value={contract}
-                onChange={setContract}
+                onChange={(value) => {
+                  setContract(value);
+                  setWarehouse("");
+                  setItems([{ variant: "", quantity: "1" }]);
+                }}
                 options={[
                   { value: "", label: "انتخاب قرارداد" },
-                  ...contracts.map((c) => ({
+                  ...contracts.filter((c) => c.is_valid_for_ordering).map((c) => ({
                     value: String(c.id),
                     label: `${c.number} — ${c.company}`,
                   })),
@@ -458,7 +557,9 @@ function CreateOrderModal({ open, onClose, onCreated, toast }) {
                 onChange={setWarehouse}
                 options={[
                   { value: "", label: "انتخاب انبار" },
-                  ...warehouses.map((w) => ({ value: String(w.id), label: w.name })),
+                  ...warehouses
+                    .filter((w) => w.is_active && (!contract || w.tenant_id === contracts.find((c) => String(c.id) === contract)?.tenant_id))
+                    .map((w) => ({ value: String(w.id), label: w.name })),
                 ]}
               />
             </Field>
@@ -495,7 +596,15 @@ function CreateOrderModal({ open, onClose, onCreated, toast }) {
                         <Select
                           value={item.variant}
                           onChange={(value) => updateItem(index, { variant: value })}
-                          options={variantOptions}
+                      options={[
+                        { value: "", label: "انتخاب کالا" },
+                        ...availableVariants
+                          .filter((v) => !items.some((other, otherIndex) => otherIndex !== index && other.variant === String(v.id)))
+                          .map((v) => ({
+                            value: String(v.id),
+                            label: `${v.product_name} · ${v.name} — ${v.sku}`,
+                          })),
+                      ]}
                         />
                       </Field>
                       <Field label="تعداد" className="w-24 shrink-0">

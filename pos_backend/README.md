@@ -120,10 +120,10 @@ POST /api/orders/{id}/cancel/
 POST /api/orders/{id}/transition/   {"to_status": "confirmed"}
 
 GET  /api/exchange-rates/
-GET  /api/proforma-invoices/
+GET  /api/proforma-invoices/       ?order=<id>
 POST /api/proforma-invoices/issue/  {"order": <id>}
 
-GET  /api/payments/
+GET  /api/payments/                ?proforma=<id>  ?order=<id>
 POST /api/payments/create/    {"proforma": <id>, "idempotency_key": "..."}
 POST /api/payments/{id}/verify/     {"outcome": "success"}
 

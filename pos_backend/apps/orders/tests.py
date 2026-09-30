@@ -2,6 +2,7 @@ import datetime
 
 from django.test import TestCase
 from django.utils import timezone
+from rest_framework.test import APIClient
 
 from apps.catalog.models import Brand, Category, Product, ProductVariant
 from apps.contracts.models import Contract
@@ -134,3 +135,217 @@ class OrderLifecycleTests(TestCase):
         with self.assertRaises(services.InvalidTransitionError):
             # از PENDING نمی‌شود مستقیم به SHIPPED پرید
             services.transition_status(order=order, to_status=Order.Status.SHIPPED)
+
+    def test_api_create_order_reserves_stock_and_returns_detail(self):
+        response = APIClient().post("/api/orders/", {
+            "contract": self.active_contract.pk,
+            "warehouse": self.warehouse.pk,
+            "items": [{"variant": self.variant.pk, "quantity": 1}],
+        }, format="json")
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(response.data["success"])
+        self.assertEqual(response.data["data"]["items"][0]["quantity"], 1)
+        self.assertEqual(response.data["data"]["status"], Order.Status.PENDING)
+        self.assertEqual(InventoryItem.objects.get(variant=self.variant).reserved, 1)
+
+    def test_api_rejects_order_without_items(self):
+        response = APIClient().post("/api/orders/", {
+            "contract": self.active_contract.pk,
+            "warehouse": self.warehouse.pk,
+            "items": [],
+        }, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Order.objects.count(), 0)
+
+    def test_api_rejects_duplicate_variant_rows(self):
+        response = APIClient().post("/api/orders/", {
+            "contract": self.active_contract.pk,
+            "warehouse": self.warehouse.pk,
+            "items": [
+                {"variant": self.variant.pk, "quantity": 1},
+                {"variant": self.variant.pk, "quantity": 1},
+            ],
+        }, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Order.objects.count(), 0)
+
+    def test_api_enforces_variant_minimum_order_quantity(self):
+        self.variant.min_order_quantity = 2
+        self.variant.save(update_fields=["min_order_quantity"])
+
+        response = APIClient().post("/api/orders/", {
+            "contract": self.active_contract.pk,
+            "warehouse": self.warehouse.pk,
+            "items": [{"variant": self.variant.pk, "quantity": 1}],
+        }, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Order.objects.count(), 0)
+        self.assertEqual(InventoryItem.objects.get(variant=self.variant).reserved, 0)
+
+    def test_api_rejects_warehouse_from_another_company(self):
+        other_company = Company.objects.create(name="شرکت دیگر", slug="other-company")
+        other_warehouse = Warehouse.objects.create(
+            tenant=other_company, name="انبار دیگر", code="WH-OTHER"
+        )
+
+        response = APIClient().post("/api/orders/", {
+            "contract": self.active_contract.pk,
+            "warehouse": other_warehouse.pk,
+            "items": [{"variant": self.variant.pk, "quantity": 1}],
+        }, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Order.objects.count(), 0)
+
+    def test_api_rejects_inactive_variant(self):
+        self.variant.is_active = False
+        self.variant.save(update_fields=["is_active"])
+
+        response = APIClient().post("/api/orders/", {
+            "contract": self.active_contract.pk,
+            "warehouse": self.warehouse.pk,
+            "items": [{"variant": self.variant.pk, "quantity": 1}],
+        }, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(InventoryItem.objects.get(variant=self.variant).reserved, 0)
+
+    def test_failed_multi_item_reservation_rolls_back_entire_order(self):
+        accessory = ProductVariant.objects.create(
+            product=self.variant.product, name="لوازم", sku="ACC-1",
+            base_price="50000", requires_serial=False,
+        )
+
+        with self.assertRaises(inventory_services.InsufficientStockError):
+            services.place_order(
+                contract=self.active_contract, warehouse=self.warehouse,
+                items=[
+                    {"variant": self.variant, "quantity": 1},
+                    {"variant": accessory, "quantity": 1},
+                ],
+            )
+
+        self.assertEqual(Order.objects.count(), 0)
+        self.assertEqual(InventoryItem.objects.get(variant=self.variant).reserved, 0)
+        self.assertEqual(
+            self.variant.ledger_entries.count(), 1,
+            "رزرو ناموفق باید رکورد دفتر رزرو را هم rollback کند؛ فقط receipt اولیه باقی بماند.",
+        )
+
+    def test_api_cancel_releases_stock_and_records_note(self):
+        order = services.place_order(
+            contract=self.active_contract, warehouse=self.warehouse,
+            items=[{"variant": self.variant, "quantity": 1}],
+        )
+
+        response = APIClient().post(f"/api/orders/{order.pk}/cancel/", {
+            "note": "درخواست نماینده",
+        }, format="json")
+
+        self.assertEqual(response.status_code, 200)
+        order.refresh_from_db()
+        self.assertEqual(order.status, Order.Status.CANCELLED)
+        self.assertEqual(InventoryItem.objects.get(variant=self.variant).reserved, 0)
+        self.assertEqual(
+            order.status_history.get(to_status=Order.Status.CANCELLED).note,
+            "درخواست نماینده",
+        )
+
+    def test_api_rejects_invalid_status_transition(self):
+        order = services.place_order(
+            contract=self.active_contract, warehouse=self.warehouse,
+            items=[{"variant": self.variant, "quantity": 1}],
+        )
+
+        response = APIClient().post(f"/api/orders/{order.pk}/transition/", {
+            "to_status": Order.Status.SHIPPED,
+        }, format="json")
+
+        self.assertEqual(response.status_code, 409)
+        order.refresh_from_db()
+        self.assertEqual(order.status, Order.Status.PENDING)
+
+    def test_api_proforma_and_payment_success_auto_confirms_order(self):
+        from apps.finance.models import LedgerEntry
+        from apps.orders.models import OrderStatusHistory
+
+        client = APIClient()
+        create_response = client.post("/api/orders/", {
+            "contract": self.active_contract.pk,
+            "warehouse": self.warehouse.pk,
+            "items": [{"variant": self.variant.pk, "quantity": 1}],
+        }, format="json")
+        order_id = create_response.data["data"]["id"]
+
+        proforma_response = client.post(
+            "/api/proforma-invoices/issue/", {"order": order_id}, format="json"
+        )
+        self.assertEqual(proforma_response.status_code, 201)
+        proforma_id = proforma_response.data["data"]["id"]
+
+        payment_response = client.post("/api/payments/create/", {
+            "proforma": proforma_id,
+            "idempotency_key": "order-flow-test-key",
+            "gateway": "mock",
+        }, format="json")
+        self.assertEqual(payment_response.status_code, 201)
+        payment_id = payment_response.data["data"]["id"]
+
+        verify_response = client.post(
+            f"/api/payments/{payment_id}/verify/", {"outcome": "success"}, format="json"
+        )
+        self.assertEqual(verify_response.status_code, 200)
+        self.assertEqual(verify_response.data["data"]["status"], "succeeded")
+
+        order = Order.objects.get(pk=order_id)
+        self.assertEqual(order.status, Order.Status.CONFIRMED)
+        self.assertTrue(OrderStatusHistory.objects.filter(
+            order=order, to_status=Order.Status.CONFIRMED,
+            note="تایید خودکار پس از پرداخت موفق",
+        ).exists())
+        self.assertEqual(LedgerEntry.objects.filter(contract=self.active_contract).count(), 2)
+
+    def test_api_shipment_and_delivery_finish_order_lifecycle(self):
+        client = APIClient()
+        create_response = client.post("/api/orders/", {
+            "contract": self.active_contract.pk,
+            "warehouse": self.warehouse.pk,
+            "items": [{"variant": self.variant.pk, "quantity": 1}],
+        }, format="json")
+        order_id = create_response.data["data"]["id"]
+
+        # Confirm through the same mock-payment workflow used by the page.
+        proforma = client.post(
+            "/api/proforma-invoices/issue/", {"order": order_id}, format="json"
+        ).data["data"]
+        payment = client.post("/api/payments/create/", {
+            "proforma": proforma["id"], "idempotency_key": "shipment-flow-key",
+        }, format="json").data["data"]
+        client.post(
+            f"/api/payments/{payment['id']}/verify/", {"outcome": "success"}, format="json"
+        )
+
+        processing = client.post(f"/api/orders/{order_id}/transition/", {
+            "to_status": Order.Status.PROCESSING,
+        }, format="json")
+        self.assertEqual(processing.status_code, 200)
+        shipped = client.post(f"/api/orders/{order_id}/transition/", {
+            "to_status": Order.Status.SHIPPED,
+        }, format="json")
+        self.assertEqual(shipped.status_code, 200)
+        delivered = client.post(f"/api/orders/{order_id}/transition/", {
+            "to_status": Order.Status.DELIVERED,
+        }, format="json")
+        self.assertEqual(delivered.status_code, 200)
+
+        order = Order.objects.get(pk=order_id)
+        item = InventoryItem.objects.get(variant=self.variant)
+        self.assertEqual(order.status, Order.Status.DELIVERED)
+        self.assertIsNotNone(order.stock_issued_at)
+        self.assertEqual(item.on_hand, 4)
+        self.assertEqual(item.reserved, 0)
+        self.assertEqual(DeviceSerial.objects.filter(status=DeviceSerial.Status.SOLD).count(), 1)
