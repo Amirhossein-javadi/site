@@ -66,18 +66,16 @@ export default function Orders() {
   const { data: orders, status, error, refetch } = useApi(listFetcher);
 
   return (
-    <>
+    <div className="mx-auto max-w-6xl">
       <PageHeader
         eyebrow="فروش"
         title="سفارش‌ها"
         subtitle="ثبت سفارش، پیگیری چرخه عمر و مدیریت وضعیت‌ها"
-        actions={
-          <Button icon={Plus} onClick={() => setCreateOpen(true)}>
+      >
+        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+          <Button icon={Plus} onClick={() => setCreateOpen(true)} className="sm:order-first">
             ثبت سفارش
           </Button>
-        }
-      >
-        <div className="flex flex-col gap-3 sm:flex-row">
           <SearchInput
             value={search}
             onChange={setSearch}
@@ -104,13 +102,6 @@ export default function Orders() {
               search || statusFilter
                 ? "با این فیلترها نتیجه‌ای وجود ندارد."
                 : "اولین سفارش را از دکمه بالا ثبت کنید."
-            }
-            action={
-              !search && !statusFilter ? (
-                <Button icon={Plus} onClick={() => setCreateOpen(true)}>
-                  ثبت سفارش
-                </Button>
-              ) : null
             }
           />
         ) : (
@@ -150,7 +141,7 @@ export default function Orders() {
         }}
         toast={toast}
       />
-    </>
+    </div>
   );
 }
 

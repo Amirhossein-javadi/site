@@ -392,6 +392,8 @@ export function Drawer({ open, onClose, title, subtitle, children }) {
     };
   }, [open, onClose]);
 
+  if (!open) return null;
+
   return (
     <div className={`fixed inset-0 z-[75] ${open ? "pointer-events-auto" : "pointer-events-none"}`}>
       <button
