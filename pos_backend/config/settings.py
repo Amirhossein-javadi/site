@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     "apps.pricing",
     "apps.payments",
     "apps.finance",
+    "apps.suppliers",
+    "apps.customers",
     "rest_framework.authtoken",
 ]
 
