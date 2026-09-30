@@ -7,7 +7,7 @@ from apps.catalog.models import Brand, Category, Product, ProductVariant
 from apps.contracts.models import Contract
 from apps.inventory import services as inventory_services
 from apps.inventory.models import DeviceSerial, InventoryItem, Warehouse
-from apps.tenants.models import Company
+from apps.tenants.models import AgentCompany, Company
 
 from . import services
 from .models import Order
@@ -33,15 +33,18 @@ class OrderLifecycleTests(TestCase):
             warehouse=self.warehouse, variant=self.variant, quantity=5,
             serial_numbers=[f"SN-{i:03d}" for i in range(1, 6)],
         )
+        self.agent = AgentCompany.objects.create(
+            tenant=self.company, name="نماینده تست"
+        )
         self.active_contract = Contract.objects.create(
             tenant=self.company, number="CT-TEST-1", title="قرارداد فعال",
-            agent_name="نماینده تست", device_cap=3,
+            agent=self.agent, device_cap=3,
             end_date=timezone.now().date() + datetime.timedelta(days=30),
             status=Contract.Status.ACTIVE,
         )
         self.expired_contract = Contract.objects.create(
             tenant=self.company, number="CT-TEST-2", title="قرارداد منقضی",
-            agent_name="نماینده تست", device_cap=10,
+            agent=self.agent, device_cap=10,
             end_date=timezone.now().date() - datetime.timedelta(days=1),
             status=Contract.Status.ACTIVE,
         )

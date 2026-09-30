@@ -12,7 +12,7 @@ from apps.inventory.models import Warehouse
 from apps.orders import services as orders_services
 from apps.orders.models import Order
 from apps.pricing import services as pricing_services
-from apps.tenants.models import Company
+from apps.tenants.models import AgentCompany, Company
 
 from . import services
 
@@ -44,9 +44,12 @@ class FullChainTests(TestCase):
         inventory_services.receive_stock(
             warehouse=self.warehouse, variant=self.variant, quantity=50
         )
+        self.agent = AgentCompany.objects.create(
+            tenant=self.company, name="نماینده"
+        )
         self.contract = Contract.objects.create(
             tenant=self.company, number="CT-PAY-1", title="قرارداد",
-            agent_name="نماینده", device_cap=100,
+            agent=self.agent, device_cap=100,
             end_date=timezone.now().date() + datetime.timedelta(days=30),
             status=Contract.Status.ACTIVE,
         )
