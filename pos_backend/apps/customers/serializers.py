@@ -11,6 +11,7 @@ class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = AgentCompany
         fields = ["id", "name", "is_active", "status", "status_label", "contracts_count"]
+        read_only_fields = ["id", "status", "status_label", "contracts_count"]
 
     def get_status(self, obj):
         return "active" if obj.is_active else "inactive"

@@ -58,7 +58,7 @@ PostgreSQL واقعاً کار می‌کند و با یک تست ۲۰ Thread ه�
 python manage.py test
 ```
 
-19 تست؛ با `DB_ENGINE=sqlite` یکی از آن‌ها (تست همزمانی) Skip می‌شود —
+۴۰ تست؛ با `DB_ENGINE=sqlite` یکی از آن‌ها (تست همزمانی) Skip می‌شود —
 طبیعی است، بالا توضیح داده شد.
 
 ## اپلیکیشن‌ها
@@ -112,8 +112,10 @@ GET  /api/inventory-ledger/
 POST /api/inventory/reserve/  /release/  /issue/
 
 GET  /api/contracts/
-GET  /api/suppliers/          ?search=
-GET  /api/customers/          ?search=  ?is_active=true|false
+GET/POST       /api/suppliers/          ?search=  ?status=active|suspended
+GET/PATCH/PUT/DELETE /api/suppliers/{id}/
+GET/POST       /api/customers/          ?search=  ?is_active=true|false
+GET/PATCH/PUT/DELETE /api/customers/{id}/
 GET  /api/orders/             ?status=  ?contract=
 POST /api/orders/
 POST /api/orders/{id}/cancel/
@@ -133,9 +135,9 @@ GET  /api/finance/balance/    ?contract=
 
 ## کارهای باقی‌مانده (فاز بعد)
 
-- احراز هویت: `/api/login/` توکن می‌دهد اما ViewSetها فعلاً `AllowAny`
-  هستند. وقتی فرانت لاگین کامل ساخت، این به `IsAuthenticated` تغییر
-  می‌کند و ViewSetها بر اساس `request.tenant` فیلتر می‌شوند.
+- دسترسی چندشرکتی: API تأمین‌کنندگان و مشتریان به ورود نیاز دارد و داده‌ها
+  را بر اساس شرکت کاربر محدود می‌کند. این محدودیت باید در ViewSetهای دیگر
+  هم پیش از استفاده چندشرکتی اعمال شود.
 - درگاه واقعی پرداخت (`apps/payments/gateways.py` — فقط یک کلاس جدید
   اضافه کنید، services.py و views.py دست نمی‌خورند).
 - مدل مستقل `AgentCompany`؛ `Contract.agent_name` و `OrderItem` باید به

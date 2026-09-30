@@ -13,6 +13,8 @@ import Orders from "./pages/Orders";
 import Proformas from "./pages/Proformas";
 import Payments from "./pages/Payments";
 import Credits from "./pages/Credits";
+import Suppliers from "./pages/Suppliers";
+import Customers from "./pages/Customers";
 import ThemeToggle from "./components/ThemeToggle";
 
 const PAGE_COMPONENTS = {
@@ -24,6 +26,8 @@ const PAGE_COMPONENTS = {
   "/proforma-invoices": Proformas,
   "/payments": Payments,
   "/credits": Credits,
+  "/suppliers": Suppliers,
+  "/customers": Customers,
 };
 
 const PANEL_ROUTES = navGroups.flatMap((group) => group.items);
