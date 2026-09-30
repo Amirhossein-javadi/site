@@ -74,6 +74,8 @@ python manage.py test
 | `pricing` | ExchangeRate + ProformaInvoice تغییرناپذیر (Snapshot) |
 | `payments` | Payment با Idempotency + انتزاع درگاه (`gateways.py`) |
 | `finance` | دفتر مالی هر قرارداد (بدهکار/بستانکار) |
+| `suppliers` | تامین‌کنندگان شرکت و زمان تحویل |
+| `customers` | فهرست شرکت‌های نماینده و وضعیت قراردادها |
 
 ## مسیر کامل یک سفارش
 
@@ -110,6 +112,8 @@ GET  /api/inventory-ledger/
 POST /api/inventory/reserve/  /release/  /issue/
 
 GET  /api/contracts/
+GET  /api/suppliers/          ?search=
+GET  /api/customers/          ?search=  ?is_active=true|false
 GET  /api/orders/             ?status=  ?contract=
 POST /api/orders/
 POST /api/orders/{id}/cancel/

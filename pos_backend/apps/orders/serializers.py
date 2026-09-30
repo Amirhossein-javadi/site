@@ -93,9 +93,16 @@ class OrderCreateSerializer(serializers.Serializer):
     def validate_items(self, value):
         if not value:
             raise serializers.ValidationError("سفارش باید حداقل یک قلم کالا داشته باشد.")
+        variant_ids = [item["variant"].pk for item in value]
+        if len(variant_ids) != len(set(variant_ids)):
+            raise serializers.ValidationError("هر کالا باید فقط یک‌بار در اقلام سفارش بیاید.")
         return value
+
+
+class CancelInputSerializer(serializers.Serializer):
+    note = serializers.CharField(required=False, allow_blank=True, max_length=255, default="")
 
 
 class TransitionInputSerializer(serializers.Serializer):
     to_status = serializers.ChoiceField(choices=Order.Status.choices)
-    note = serializers.CharField(required=False, allow_blank=True, default="")
+    note = serializers.CharField(required=False, allow_blank=True, max_length=255, default="")

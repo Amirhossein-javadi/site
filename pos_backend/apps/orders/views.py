@@ -8,6 +8,7 @@ from apps.inventory.services import InsufficientStockError, SerialConflictError
 from . import services
 from .models import Order
 from .serializers import (
+    CancelInputSerializer,
     OrderCreateSerializer,
     OrderDetailSerializer,
     OrderListSerializer,
@@ -87,11 +88,13 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     def cancel(self, request, pk=None):
         """POST /api/orders/{id}/cancel/"""
         order = self.get_object()
+        input_serializer = CancelInputSerializer(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
         try:
             order = services.cancel_order(
                 order=order,
                 user=request.user if request.user.is_authenticated else None,
-                note=request.data.get("note", ""),
+                note=input_serializer.validated_data["note"],
             )
         except services.InvalidTransitionError as exc:
             return _error(str(exc), code="INVALID_TRANSITION", http_status=409)

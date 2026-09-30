@@ -11,6 +11,7 @@ from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
 
+from apps.contracts.models import Contract
 from apps.inventory import services as inventory_services
 from apps.inventory.models import Warehouse
 
@@ -93,6 +94,33 @@ def place_order(*, contract, warehouse: Warehouse, items: list, user=None, notes
     """
     if not items:
         raise ValueError("سفارش باید حداقل یک قلم کالا داشته باشد.")
+
+    # قفل قرارداد باعث می‌شود دو سفارش هم‌زمان برای یک قرارداد نتوانند
+    # هم‌زمان از یک ظرفیت باقی‌مانده استفاده کنند.
+    contract = Contract.objects.select_for_update().select_related("agent").get(pk=contract.pk)
+
+    if not warehouse.is_active:
+        raise ValueError("انبار انتخاب‌شده غیرفعال است.")
+    if warehouse.tenant_id != contract.tenant_id:
+        raise ValueError("انبار و قرارداد باید متعلق به یک شرکت باشند.")
+    if contract.agent.tenant_id != contract.tenant_id:
+        raise ValueError("شرکت نماینده و قرارداد با یک شرکت مرتبط نیستند.")
+
+    variant_ids = [entry["variant"].pk for entry in items]
+    if len(variant_ids) != len(set(variant_ids)):
+        raise ValueError("هر کالا باید فقط یک‌بار در اقلام سفارش بیاید.")
+
+    for entry in items:
+        variant = entry["variant"]
+        quantity = entry["quantity"]
+        if not variant.is_active or not variant.product.is_active:
+            raise ValueError(f"کالای {variant.sku} غیرفعال است.")
+        if variant.product.tenant_id != contract.tenant_id:
+            raise ValueError(f"کالای {variant.sku} متعلق به شرکت قرارداد نیست.")
+        if quantity < variant.min_order_quantity:
+            raise ValueError(
+                f"حداقل تعداد سفارش برای {variant.sku} برابر {variant.min_order_quantity} است."
+            )
 
     if not contract.is_valid_for_ordering:
         raise ContractNotValidError(
