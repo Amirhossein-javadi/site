@@ -15,7 +15,7 @@ from apps.contracts.models import Contract
 from apps.inventory import services as inventory_services
 from apps.inventory.models import Warehouse
 
-from .models import Order, OrderItem, OrderStatusHistory
+from .models import Order, OrderItem, OrderStatusHistory, Shipment
 
 
 class ContractNotValidError(Exception):
@@ -152,7 +152,7 @@ def place_order(*, contract, warehouse: Warehouse, items: list, user=None, notes
         variant = entry["variant"]
         quantity = entry["quantity"]
 
-        inventory_services.reserve_stock(
+        _, reserved_serials = inventory_services.reserve_stock(
             warehouse=warehouse,
             variant=variant,
             quantity=quantity,
@@ -168,6 +168,7 @@ def place_order(*, contract, warehouse: Warehouse, items: list, user=None, notes
             quantity=quantity,
             unit_price=variant.base_price,
             currency=variant.currency,
+            serial_numbers=[serial.serial_number for serial in reserved_serials],
         )
 
     return order
@@ -197,11 +198,19 @@ def transition_status(*, order: Order, to_status: str, user=None, note=""):
                 warehouse=order.warehouse,
                 variant=item.variant,
                 quantity=item.quantity,
+                serial_numbers=item.serial_numbers,
                 reference=order.order_number,
                 note="خروج کالا هنگام ارسال سفارش",
                 user=user,
             )
         order.stock_issued_at = timezone.now()
+        Shipment.objects.get_or_create(
+            order=order,
+            defaults={
+                "tenant_id": order.tenant_id,
+                "shipped_at": order.stock_issued_at,
+            },
+        )
 
     if to_status == Order.Status.CANCELLED:
         if not order.is_cancellable:
@@ -220,6 +229,13 @@ def transition_status(*, order: Order, to_status: str, user=None, note=""):
 
     order.status = to_status
     order.save(update_fields=["status", "stock_issued_at", "updated_at"])
+
+    if to_status == Order.Status.DELIVERED:
+        Shipment.objects.filter(order=order).update(
+            status=Shipment.Status.DELIVERED,
+            delivered_at=timezone.now(),
+            updated_at=timezone.now(),
+        )
 
     OrderStatusHistory.objects.create(
         order=order, from_status=current, to_status=to_status, changed_by=user, note=note

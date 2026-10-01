@@ -253,3 +253,53 @@ def issue_stock(
 
     _log(item, InventoryLedger.Kind.ISSUE, -quantity, reference, note, user)
     return item
+
+
+@transaction.atomic
+def receive_return(
+    *, warehouse: Warehouse, variant: ProductVariant, quantity: int,
+    serial_numbers=None, restock=True, reference="", note="", user=None,
+) -> InventoryItem | None:
+    """Record a customer return; only sellable items increase on-hand stock."""
+    if quantity <= 0:
+        raise ValueError("تعداد کالای مرجوعی باید بزرگ‌تر از صفر باشد.")
+
+    serial_numbers = list(serial_numbers or [])
+    if variant.requires_serial:
+        if len(serial_numbers) != quantity or len(set(serial_numbers)) != quantity:
+            raise SerialConflictError("برای هر دستگاه مرجوعی باید یک سریال یکتا ثبت شود.")
+        serials = list(
+            DeviceSerial.objects.select_for_update().filter(
+                serial_number__in=serial_numbers,
+                variant=variant,
+                warehouse=warehouse,
+                status=DeviceSerial.Status.SOLD,
+            )
+        )
+        if len(serials) != quantity:
+            raise SerialConflictError("یک یا چند سریال متعلق به کالای فروخته‌شده این سفارش نیست.")
+        DeviceSerial.objects.filter(pk__in=[serial.pk for serial in serials]).update(
+            status=(DeviceSerial.Status.IN_STOCK if restock else DeviceSerial.Status.DEFECTIVE)
+        )
+    elif serial_numbers:
+        raise SerialConflictError("این کالا سریال‌دار نیست و نباید سریالی برای آن ثبت شود.")
+
+    item = None
+    if restock:
+        item, _ = InventoryItem.objects.get_or_create(warehouse=warehouse, variant=variant)
+        item = InventoryItem.objects.select_for_update().get(pk=item.pk)
+        item.on_hand += quantity
+        item.save(update_fields=["on_hand", "updated_at"])
+    elif not variant.requires_serial:
+        item = InventoryItem.objects.filter(warehouse=warehouse, variant=variant).first()
+
+    if item is not None:
+        _log(
+            item,
+            InventoryLedger.Kind.RETURN,
+            quantity if restock else 0,
+            reference,
+            note or ("کالای سالم به موجودی برگشت" if restock else "کالای معیوب؛ خارج از موجودی قابل فروش"),
+            user,
+        )
+    return item

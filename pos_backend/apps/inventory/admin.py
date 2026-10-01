@@ -15,7 +15,13 @@ class InventoryItemAdmin(admin.ModelAdmin):
     list_filter = ("warehouse",)
     search_fields = ("variant__sku", "variant__product__name")
     # on_hand/reserved فقط از طریق سرویس‌ها تغییر می‌کنند، نه دستی در ادمین
-    readonly_fields = ("on_hand", "reserved")
+    readonly_fields = tuple(field.name for field in InventoryItem._meta.fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
     @admin.display(description="قابل فروش")
     def available(self, obj):
@@ -27,6 +33,15 @@ class DeviceSerialAdmin(admin.ModelAdmin):
     list_display = ("serial_number", "variant", "warehouse", "status", "received_at")
     list_filter = ("status", "warehouse")
     search_fields = ("serial_number", "variant__sku")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(InventoryLedger)
