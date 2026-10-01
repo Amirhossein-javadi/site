@@ -358,3 +358,32 @@ class OrderLifecycleTests(TestCase):
         self.assertEqual(item.on_hand, 4)
         self.assertEqual(item.reserved, 0)
         self.assertEqual(DeviceSerial.objects.filter(status=DeviceSerial.Status.SOLD).count(), 1)
+
+    def test_api_lists_return_items(self):
+        from apps.orders import fulfillment
+
+        order = services.place_order(
+            contract=self.active_contract,
+            warehouse=self.warehouse,
+            items=[{"variant": self.variant, "quantity": 1}],
+        )
+        services.transition_status(order=order, to_status=Order.Status.CONFIRMED)
+        services.transition_status(order=order, to_status=Order.Status.PROCESSING)
+        order = services.transition_status(order=order, to_status=Order.Status.SHIPPED)
+        order_item = order.items.get()
+        return_request = fulfillment.create_return_request(
+            order=order,
+            items=[{
+                "order_item": order_item,
+                "quantity": 1,
+                "serial_numbers": order_item.serial_numbers,
+            }],
+            reason="تست نمایش مرجوعی",
+            user=self.user,
+        )
+
+        response = self.client.get("/api/returns/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data[0]["return_number"], return_request.return_number)
+        self.assertEqual(response.data[0]["items"][0]["order_item_id"], order_item.pk)

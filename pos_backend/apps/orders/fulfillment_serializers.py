@@ -46,7 +46,7 @@ class ReturnItemSerializer(serializers.ModelSerializer):
     product_title = serializers.CharField(
         source="order_item.variant.display_title", read_only=True
     )
-    order_item_id = serializers.IntegerField(source="order_item_id", read_only=True)
+    order_item_id = serializers.IntegerField(read_only=True)
     condition_label = serializers.CharField(source="get_condition_display", read_only=True)
 
     class Meta:
