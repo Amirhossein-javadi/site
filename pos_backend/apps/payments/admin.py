@@ -11,8 +11,11 @@ class PaymentAdmin(admin.ModelAdmin):
     )
     list_filter = ("gateway", "status")
     search_fields = ("gateway_reference", "idempotency_key", "proforma__number")
-    readonly_fields = ("created_at", "verified_at")
+    readonly_fields = tuple(field.name for field in Payment._meta.fields)
 
     def has_add_permission(self, request):
         # پرداخت فقط از طریق services.create_payment_intent ساخته می‌شود
+        return False
+
+    def has_delete_permission(self, request, obj=None):
         return False

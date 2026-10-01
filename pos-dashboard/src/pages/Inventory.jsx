@@ -1,19 +1,25 @@
 import { useState } from "react";
-import { ScanBarcode } from "lucide-react";
+import { Plus, ScanBarcode } from "lucide-react";
 import {
   Badge,
+  Button,
   Cell,
   DataTable,
   EmptyState,
   ErrorState,
+  Field,
+  Input,
+  Modal,
   PageHeader,
   Row,
   SearchInput,
   Select,
   TableSkeleton,
+  Textarea,
 } from "../components/ui";
+import { useToast } from "../components/Toast";
 import { api } from "../lib/api";
-import { formatDate, formatNumber, useApi } from "../lib/hooks";
+import { formatDate, formatNumber, useApi, useMutation } from "../lib/hooks";
 
 const SERIAL_STATUS_TONES = {
   in_stock: "success",
@@ -24,7 +30,9 @@ const SERIAL_STATUS_TONES = {
 };
 
 export default function Inventory() {
+  const toast = useToast();
   const [tab, setTab] = useState("stock"); // stock | serials
+  const [receiveOpen, setReceiveOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [warehouse, setWarehouse] = useState("");
   const [serialStatus, setSerialStatus] = useState("");
@@ -55,6 +63,7 @@ export default function Inventory() {
     <div>
       <PageHeader
         title="موجودی و سریال"
+        actions={<Button icon={Plus} onClick={() => setReceiveOpen(true)}>ثبت ورود کالا</Button>}
         badge={
           active.status === "ready" && (
             <Badge>{formatNumber(active.data?.length ?? 0)} ردیف</Badge>
@@ -188,6 +197,111 @@ export default function Inventory() {
           ))}
         </DataTable>
       )}
+
+      <ReceiveStockModal
+        open={receiveOpen}
+        onClose={() => setReceiveOpen(false)}
+        onReceived={() => {
+          setReceiveOpen(false);
+          stock.refetch();
+          serials.refetch();
+          toast.success("ورود کالا ثبت شد و دفتر انبار به‌روزرسانی شد.");
+        }}
+        toast={toast}
+      />
     </div>
+  );
+}
+
+function ReceiveStockModal({ open, onClose, onReceived, toast }) {
+  const options = useApi(
+    () => open
+      ? Promise.all([api.getWarehouses(), api.getVariants()])
+      : Promise.resolve([[], []]),
+    [open]
+  );
+  const [warehouse, setWarehouse] = useState("");
+  const [variant, setVariant] = useState("");
+  const [quantity, setQuantity] = useState("1");
+  const [serialText, setSerialText] = useState("");
+  const [reference, setReference] = useState("");
+  const [note, setNote] = useState("");
+  const receive = useMutation((payload) => api.receiveStock(payload));
+  const [warehouses, variants] = options.data ?? [[], []];
+  const selectedVariant = variants.find((item) => String(item.id) === variant);
+
+  async function submit(event) {
+    event.preventDefault();
+    if (!warehouse || !variant || Number(quantity) < 1) {
+      toast.error("انبار، کالا و تعداد معتبر را وارد کنید.");
+      return;
+    }
+    const serialNumbers = serialText
+      ? serialText.split(/[\n,،\r]+/).map((value) => value.trim()).filter(Boolean)
+      : [];
+    const result = await receive.run({
+      warehouse: Number(warehouse),
+      variant: Number(variant),
+      quantity: Number(quantity),
+      serial_numbers: serialNumbers,
+      reference,
+      note,
+    });
+    if (!result.ok) return toast.error(result.error.message);
+    setWarehouse("");
+    setVariant("");
+    setQuantity("1");
+    setSerialText("");
+    setReference("");
+    setNote("");
+    onReceived();
+  }
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="ثبت ورود کالا به انبار"
+      subtitle="موجودی فقط از طریق این عملیات به‌روزرسانی و در دفتر انبار ثبت می‌شود."
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>انصراف</Button>
+          <Button form="receive-stock" type="submit" loading={receive.pending}>ثبت ورود</Button>
+        </div>
+      }
+    >
+      {options.status === "loading" && <TableSkeleton rows={3} cols={2} />}
+      {options.status === "error" && <ErrorState message={options.error} onRetry={options.refetch} />}
+      {options.status === "ready" && (
+        <form id="receive-stock" onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+          <Field label="انبار">
+            <Select value={warehouse} onChange={setWarehouse} required options={[
+              { value: "", label: "انتخاب انبار" },
+              ...warehouses.map((item) => ({ value: String(item.id), label: item.name })),
+            ]} />
+          </Field>
+          <Field label="کالا / نسخه">
+            <Select value={variant} onChange={(value) => { setVariant(value); setSerialText(""); }} required options={[
+              { value: "", label: "انتخاب نسخه کالا" },
+              ...variants.map((item) => ({ value: String(item.id), label: `${item.product_name} — ${item.name} · ${item.sku}` })),
+            ]} />
+          </Field>
+          <Field label="تعداد">
+            <Input type="number" min="1" step="1" value={quantity} onChange={(event) => setQuantity(event.target.value)} required />
+          </Field>
+          <Field label="مرجع رسید" hint="اختیاری؛ مثل شماره فاکتور خرید">
+            <Input value={reference} onChange={(event) => setReference(event.target.value)} maxLength={100} />
+          </Field>
+          {selectedVariant?.requires_serial && (
+            <Field label="شماره سریال‌ها" hint={`دقیقاً ${quantity || 0} سریال یکتا وارد کنید.`} className="sm:col-span-2">
+              <Textarea value={serialText} onChange={(event) => setSerialText(event.target.value)} placeholder="هر سریال را در یک خط یا با ویرگول جدا کنید" dir="ltr" />
+            </Field>
+          )}
+          <Field label="توضیحات" className="sm:col-span-2">
+            <Textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={255} />
+          </Field>
+        </form>
+      )}
+    </Modal>
   );
 }

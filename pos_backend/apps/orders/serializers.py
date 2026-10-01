@@ -18,6 +18,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = [
             "id", "variant", "sku", "product_title",
             "quantity", "unit_price", "currency", "line_total",
+            "serial_numbers",
         ]
 
     def get_line_total(self, obj):

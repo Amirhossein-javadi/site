@@ -18,6 +18,13 @@ const STATUS = {
   sold: ["فروخته شده", "neutral"],
   returned: ["مرجوعی", "frost"],
   defective: ["معیوب", "danger"],
+  in_transit: ["در مسیر", "frost"],
+  requested: ["در انتظار بررسی", "warn"],
+  approved: ["تأییدشده", "success"],
+  received: ["دریافت‌شده", "success"],
+  rejected: ["ردشده", "danger"],
+  succeeded: ["موفق", "success"],
+  created: ["ایجادشده", "neutral"],
 };
 
 export default function StatusBadge({ status, label }) {

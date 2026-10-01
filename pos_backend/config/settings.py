@@ -137,15 +137,12 @@ SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=0 if DEBUG else 259
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
 X_FRAME_OPTIONS = "DENY"
 
-# --- Django REST Framework ---
-# فعلاً AllowAny چون فرانت هنوز صفحه Login/Auth ندارد؛ با ساخته‌شدن
-# فلوی احراز هویت در فرانت، این باید به IsAuthenticated تغییر کند.
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny",
+        "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
     ],
 }
 
@@ -154,9 +151,3 @@ CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS",
     default=["http://localhost:5173", "http://127.0.0.1:5173"],
 )
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-    ],
-}

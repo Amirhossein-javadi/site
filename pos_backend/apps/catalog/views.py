@@ -3,6 +3,8 @@ from django.db.models.functions import Coalesce
 from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter, SearchFilter
 
+from apps.tenants.querysets import for_user_tenant
+
 from .models import Brand, Category, Product, ProductVariant
 from .serializers import (
     BrandSerializer,
@@ -43,13 +45,16 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ["name", "created_at"]
 
     def get_queryset(self):
+        products = for_user_tenant(
+            Product.objects.filter(is_active=True), self.request.user
+        )
         variants = (
             ProductVariant.objects.filter(is_active=True)
             .annotate(total_available=_AVAILABLE)
             .order_by("name")
         )
         return (
-            Product.objects.filter(is_active=True)
+            products
             .select_related("category", "brand")
             .prefetch_related(Prefetch("variants", queryset=variants))
             .distinct()
@@ -64,8 +69,13 @@ class ProductVariantViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ["sku", "name", "product__name"]
 
     def get_queryset(self):
+        variants = for_user_tenant(
+            ProductVariant.objects.filter(is_active=True),
+            self.request.user,
+            lookup="product__tenant_id",
+        )
         return (
-            ProductVariant.objects.filter(is_active=True)
+            variants
             .select_related("product")
             .annotate(total_available=_AVAILABLE)
         )

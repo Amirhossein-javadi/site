@@ -97,6 +97,9 @@ function withQuery(path, params = {}) {
 
 const post = (path, data) =>
   request(path, { method: "POST", body: JSON.stringify(data ?? {}) });
+const patch = (path, data) =>
+  request(path, { method: "PATCH", body: JSON.stringify(data ?? {}) });
+const del = (path) => request(path, { method: "DELETE" });
 
 const getList = (path, params) => request(withQuery(path, params)).then(toList);
 
@@ -124,6 +127,7 @@ export const api = {
   reserveStock: (data) => post("/inventory/reserve/", data),
   releaseStock: (data) => post("/inventory/release/", data),
   issueStock: (data) => post("/inventory/issue/", data),
+  receiveStock: (data) => post("/inventory/receive/", data),
 
   // --- قراردادها ---
   getContracts: (search) => getList("/contracts/", { search }),
@@ -137,6 +141,20 @@ export const api = {
   cancelOrder: (id, note) => post(`/orders/${id}/cancel/`, { note }),
   transitionOrder: (id, toStatus, note) =>
     post(`/orders/${id}/transition/`, { to_status: toStatus, note }),
+
+  // --- ارسال‌ها ---
+  getShipments: ({ search, status } = {}) =>
+    getList("/shipments/", { search, status }),
+  updateShipment: (id, data) => patch(`/shipments/${id}/`, data),
+  deliverShipment: (id) => post(`/shipments/${id}/deliver/`),
+
+  // --- مرجوعی‌ها ---
+  getReturns: ({ search, status, order } = {}) =>
+    getList("/returns/", { search, status, order }),
+  createReturn: (data) => post("/returns/", data),
+  approveReturn: (id, note = "") => post(`/returns/${id}/approve/`, { note }),
+  rejectReturn: (id, note = "") => post(`/returns/${id}/reject/`, { note }),
+  receiveReturn: (id) => post(`/returns/${id}/receive/`),
 
   // --- قیمت‌گذاری و پیش‌فاکتور ---
   getProformas: (params) => getList("/proforma-invoices/", params),
@@ -159,4 +177,21 @@ export const api = {
   getLedgerEntries: (contract) => getList("/finance/ledger/", { contract }),
   getContractBalance: (contract) =>
     request(withQuery("/finance/balance/", { contract })),
+
+  // --- تامین‌کنندگان ---
+  getSuppliers: ({ search, status } = {}) =>
+    getList("/suppliers/", { search, status }),
+  createSupplier: (data) => post("/suppliers/", data),
+  updateSupplier: (id, data) => patch(`/suppliers/${id}/`, data),
+  deleteSupplier: (id) => del(`/suppliers/${id}/`),
+
+  // --- مشتریان ---
+  getCustomers: ({ search, isActive } = {}) =>
+    getList("/customers/", {
+      search,
+      is_active: isActive === "" ? undefined : isActive,
+    }),
+  createCustomer: (data) => post("/customers/", data),
+  updateCustomer: (id, data) => patch(`/customers/${id}/`, data),
+  deleteCustomer: (id) => del(`/customers/${id}/`),
 };

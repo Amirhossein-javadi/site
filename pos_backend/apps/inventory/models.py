@@ -174,6 +174,7 @@ class InventoryLedger(models.Model):
         ADJUSTMENT = "adjustment", "اصلاح دستی"
         TRANSFER_IN = "transfer_in", "انتقال ورودی"
         TRANSFER_OUT = "transfer_out", "انتقال خروجی"
+        RETURN = "return", "ورود کالای مرجوعی"
 
     warehouse = models.ForeignKey(
         Warehouse, on_delete=models.PROTECT, related_name="ledger_entries"
