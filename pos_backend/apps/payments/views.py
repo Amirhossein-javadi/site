@@ -2,6 +2,8 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 
+from apps.tenants.querysets import for_user_tenant
+
 from . import services
 from .models import Payment
 from .serializers import (
@@ -22,7 +24,11 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PaymentSerializer
 
     def get_queryset(self):
-        queryset = Payment.objects.select_related("proforma", "proforma__order")
+        queryset = for_user_tenant(
+            Payment.objects.select_related("proforma", "proforma__order"),
+            self.request.user,
+            lookup="proforma__order__tenant_id",
+        )
         proforma_id = self.request.query_params.get("proforma")
         order_id = self.request.query_params.get("order")
         if proforma_id:
@@ -55,6 +61,29 @@ def create_payment_intent(request):
     input_serializer = CreatePaymentIntentSerializer(data=request.data)
     input_serializer.is_valid(raise_exception=True)
     payload = input_serializer.validated_data
+
+    if (
+        not request.user.is_superuser
+        and payload["proforma"].order.tenant_id != request.user.tenant_id
+    ):
+        from django.http import Http404
+
+        raise Http404
+    reused_key = Payment.objects.filter(
+        idempotency_key=payload["idempotency_key"]
+    ).select_related("proforma__order").first()
+    if reused_key and reused_key.proforma_id != payload["proforma"].pk:
+        return _error(
+            "این کلید درخواست برای پیش‌فاکتور دیگری استفاده شده است.",
+            "IDEMPOTENCY_KEY_USED",
+            409,
+        )
+    if (
+        reused_key
+        and not request.user.is_superuser
+        and reused_key.proforma.order.tenant_id != request.user.tenant_id
+    ):
+        return _error("کلید درخواست پرداخت قبلاً استفاده شده است.", "IDEMPOTENCY_KEY_USED", 409)
 
     try:
         payment = services.create_payment_intent(

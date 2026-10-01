@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from apps.contracts.models import Contract
+from apps.tenants.querysets import for_user_tenant
 
 from . import services
 from .models import LedgerEntry
@@ -16,7 +17,11 @@ class LedgerEntryViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = LedgerEntrySerializer
 
     def get_queryset(self):
-        qs = LedgerEntry.objects.select_related("contract")
+        qs = for_user_tenant(
+            LedgerEntry.objects.select_related("contract"),
+            self.request.user,
+            lookup="contract__tenant_id",
+        )
         contract_id = self.request.query_params.get("contract")
         if contract_id:
             qs = qs.filter(contract_id=contract_id)
@@ -27,7 +32,9 @@ class LedgerEntryViewSet(viewsets.ReadOnlyModelViewSet):
 def contract_balance(request):
     """GET /api/finance/balance/?contract=<id>"""
     contract_id = request.query_params.get("contract")
-    contract = get_object_or_404(Contract, pk=contract_id)
+    contract = get_object_or_404(
+        for_user_tenant(Contract.objects.all(), request.user), pk=contract_id
+    )
     balance = services.contract_balance(contract)
     return Response(
         {

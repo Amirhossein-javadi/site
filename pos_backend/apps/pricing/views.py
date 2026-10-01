@@ -2,6 +2,8 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from apps.tenants.querysets import for_user_tenant
+
 from . import services
 from .models import ExchangeRate, ProformaInvoice
 from .serializers import (
@@ -24,11 +26,14 @@ class ExchangeRateViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class ProformaInvoiceViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = ProformaInvoice.objects.select_related("order").prefetch_related("lines")
     serializer_class = ProformaInvoiceSerializer
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = for_user_tenant(
+            ProformaInvoice.objects.select_related("order").prefetch_related("lines"),
+            self.request.user,
+            lookup="order__tenant_id",
+        )
         order_id = self.request.query_params.get("order")
         if order_id:
             queryset = queryset.filter(order_id=order_id)
@@ -42,8 +47,13 @@ def issue_proforma(request):
     input_serializer.is_valid(raise_exception=True)
 
     try:
+        order = input_serializer.validated_data["order"]
+        if not request.user.is_superuser and order.tenant_id != request.user.tenant_id:
+            from django.http import Http404
+
+            raise Http404
         proforma = services.issue_proforma_invoice(
-            order=input_serializer.validated_data["order"]
+            order=order
         )
     except services.ProformaAlreadyIssuedError as exc:
         return _error(str(exc), code="PROFORMA_ALREADY_ISSUED", http_status=409)

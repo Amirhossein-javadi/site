@@ -2,6 +2,8 @@ from rest_framework import mixins, viewsets
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import IsAuthenticated
 
+from apps.tenants.querysets import for_user_tenant, tenant_for_user
+
 from .models import Supplier
 from .serializers import SupplierSerializer
 
@@ -20,18 +22,16 @@ class SupplierViewSet(
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        tenant_id = getattr(self.request.user, "tenant_id", None)
-        queryset = Supplier.objects.select_related("tenant")
-        if tenant_id is None:
-            return queryset.none()
-        queryset = queryset.filter(tenant_id=tenant_id)
+        queryset = for_user_tenant(
+            Supplier.objects.select_related("tenant"), self.request.user
+        )
         status = self.request.query_params.get("status")
         if status in (Supplier.Status.ACTIVE, Supplier.Status.SUSPENDED):
             queryset = queryset.filter(status=status)
         return queryset
 
     def perform_create(self, serializer):
-        tenant = getattr(self.request.user, "tenant", None)
+        tenant = tenant_for_user(self.request.user)
         if tenant is None:
             from rest_framework.exceptions import PermissionDenied
 

@@ -4,6 +4,7 @@ from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 
 from apps.inventory.services import InsufficientStockError, SerialConflictError
+from apps.tenants.querysets import for_user_tenant
 
 from . import services
 from .models import Order
@@ -39,7 +40,9 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ["order_number", "contract__number"]
 
     def get_queryset(self):
-        qs = Order.objects.select_related("contract", "warehouse")
+        qs = for_user_tenant(
+            Order.objects.select_related("contract", "warehouse"), self.request.user
+        )
         status_param = self.request.query_params.get("status")
         if status_param:
             qs = qs.filter(status=status_param)
@@ -58,6 +61,13 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
         input_serializer = OrderCreateSerializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
         payload = input_serializer.validated_data
+        if (
+            not request.user.is_superuser
+            and payload["contract"].tenant_id != request.user.tenant_id
+        ):
+            from django.http import Http404
+
+            raise Http404
 
         try:
             order = services.place_order(

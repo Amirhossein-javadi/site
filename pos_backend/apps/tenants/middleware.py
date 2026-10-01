@@ -10,5 +10,9 @@ class TenantMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        request.tenant = request.user.tenant if request.user.is_authenticated else None
+        request.tenant = (
+            getattr(request.user, "tenant", None)
+            if request.user.is_authenticated
+            else None
+        )
         return self.get_response(request)

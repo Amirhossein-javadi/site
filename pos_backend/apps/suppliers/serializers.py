@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from apps.tenants.querysets import tenant_for_user
+
 from .models import Supplier
 
 
@@ -8,11 +10,11 @@ class SupplierSerializer(serializers.ModelSerializer):
 
     def validate_code(self, value):
         request = self.context.get("request")
-        tenant_id = getattr(getattr(request, "user", None), "tenant_id", None)
-        if tenant_id is None:
+        tenant = tenant_for_user(getattr(request, "user", None))
+        if tenant is None:
             raise serializers.ValidationError("حساب کاربری به شرکت متصل نیست.")
 
-        matching = Supplier.objects.filter(tenant_id=tenant_id, code=value)
+        matching = Supplier.objects.filter(tenant=tenant, code=value)
         if self.instance:
             matching = matching.exclude(pk=self.instance.pk)
         if matching.exists():
