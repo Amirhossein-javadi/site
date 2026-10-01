@@ -1,7 +1,6 @@
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { CheckCircle2, AlertCircle, X } from "lucide-react";
-
-const ToastContext = createContext(null);
+import { ToastContext } from "./toast-context";
 
 const TONES = {
   success: {
@@ -70,10 +69,4 @@ export function ToastProvider({ children }) {
       </div>
     </ToastContext.Provider>
   );
-}
-
-export function useToast() {
-  const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error("useToast باید داخل ToastProvider استفاده شود.");
-  return ctx;
 }

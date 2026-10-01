@@ -12,7 +12,7 @@ import {
   TableSkeleton,
 } from "../components/ui";
 import StatusBadge from "../components/StatusBadge";
-import { useToast } from "../components/Toast";
+import { useToast } from "../components/toast-context";
 import { api } from "../lib/api";
 import { formatDateTime, formatMoney, useApi, useMutation } from "../lib/hooks";
 

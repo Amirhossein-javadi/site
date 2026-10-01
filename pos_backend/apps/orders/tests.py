@@ -9,6 +9,7 @@ from apps.contracts.models import Contract
 from apps.inventory import services as inventory_services
 from apps.inventory.models import DeviceSerial, InventoryItem, Warehouse
 from apps.tenants.models import AgentCompany, Company
+from apps.users.models import User
 
 from . import services
 from .models import Order
@@ -17,6 +18,14 @@ from .models import Order
 class OrderLifecycleTests(TestCase):
     def setUp(self):
         self.company = Company.objects.create(name="تست", slug="test-co")
+        self.user = User.objects.create_user(
+            email="orders@example.invalid",
+            password="test-password",
+            tenant=self.company,
+            role=User.Role.SALES_MANAGER,
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
         self.warehouse = Warehouse.objects.create(
             tenant=self.company, name="انبار تست", code="WH-T"
         )
@@ -137,7 +146,7 @@ class OrderLifecycleTests(TestCase):
             services.transition_status(order=order, to_status=Order.Status.SHIPPED)
 
     def test_api_create_order_reserves_stock_and_returns_detail(self):
-        response = APIClient().post("/api/orders/", {
+        response = self.client.post("/api/orders/", {
             "contract": self.active_contract.pk,
             "warehouse": self.warehouse.pk,
             "items": [{"variant": self.variant.pk, "quantity": 1}],
@@ -150,7 +159,7 @@ class OrderLifecycleTests(TestCase):
         self.assertEqual(InventoryItem.objects.get(variant=self.variant).reserved, 1)
 
     def test_api_rejects_order_without_items(self):
-        response = APIClient().post("/api/orders/", {
+        response = self.client.post("/api/orders/", {
             "contract": self.active_contract.pk,
             "warehouse": self.warehouse.pk,
             "items": [],
@@ -160,7 +169,7 @@ class OrderLifecycleTests(TestCase):
         self.assertEqual(Order.objects.count(), 0)
 
     def test_api_rejects_duplicate_variant_rows(self):
-        response = APIClient().post("/api/orders/", {
+        response = self.client.post("/api/orders/", {
             "contract": self.active_contract.pk,
             "warehouse": self.warehouse.pk,
             "items": [
@@ -176,7 +185,7 @@ class OrderLifecycleTests(TestCase):
         self.variant.min_order_quantity = 2
         self.variant.save(update_fields=["min_order_quantity"])
 
-        response = APIClient().post("/api/orders/", {
+        response = self.client.post("/api/orders/", {
             "contract": self.active_contract.pk,
             "warehouse": self.warehouse.pk,
             "items": [{"variant": self.variant.pk, "quantity": 1}],
@@ -192,7 +201,7 @@ class OrderLifecycleTests(TestCase):
             tenant=other_company, name="انبار دیگر", code="WH-OTHER"
         )
 
-        response = APIClient().post("/api/orders/", {
+        response = self.client.post("/api/orders/", {
             "contract": self.active_contract.pk,
             "warehouse": other_warehouse.pk,
             "items": [{"variant": self.variant.pk, "quantity": 1}],
@@ -205,7 +214,7 @@ class OrderLifecycleTests(TestCase):
         self.variant.is_active = False
         self.variant.save(update_fields=["is_active"])
 
-        response = APIClient().post("/api/orders/", {
+        response = self.client.post("/api/orders/", {
             "contract": self.active_contract.pk,
             "warehouse": self.warehouse.pk,
             "items": [{"variant": self.variant.pk, "quantity": 1}],
@@ -242,7 +251,7 @@ class OrderLifecycleTests(TestCase):
             items=[{"variant": self.variant, "quantity": 1}],
         )
 
-        response = APIClient().post(f"/api/orders/{order.pk}/cancel/", {
+        response = self.client.post(f"/api/orders/{order.pk}/cancel/", {
             "note": "درخواست نماینده",
         }, format="json")
 
@@ -261,7 +270,7 @@ class OrderLifecycleTests(TestCase):
             items=[{"variant": self.variant, "quantity": 1}],
         )
 
-        response = APIClient().post(f"/api/orders/{order.pk}/transition/", {
+        response = self.client.post(f"/api/orders/{order.pk}/transition/", {
             "to_status": Order.Status.SHIPPED,
         }, format="json")
 
@@ -273,7 +282,7 @@ class OrderLifecycleTests(TestCase):
         from apps.finance.models import LedgerEntry
         from apps.orders.models import OrderStatusHistory
 
-        client = APIClient()
+        client = self.client
         create_response = client.post("/api/orders/", {
             "contract": self.active_contract.pk,
             "warehouse": self.warehouse.pk,
@@ -310,7 +319,7 @@ class OrderLifecycleTests(TestCase):
         self.assertEqual(LedgerEntry.objects.filter(contract=self.active_contract).count(), 2)
 
     def test_api_shipment_and_delivery_finish_order_lifecycle(self):
-        client = APIClient()
+        client = self.client
         create_response = client.post("/api/orders/", {
             "contract": self.active_contract.pk,
             "warehouse": self.warehouse.pk,
