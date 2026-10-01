@@ -17,7 +17,7 @@ import {
   Textarea,
 } from "../components/ui";
 import StatusBadge from "../components/StatusBadge";
-import { useToast } from "../components/Toast";
+import { useToast } from "../components/toast-context";
 import { api } from "../lib/api";
 import { formatDateTime, formatNumber, useApi, useDebounced, useMutation } from "../lib/hooks";
 
@@ -38,7 +38,10 @@ export default function Shipments() {
     () => api.getShipments({ search: debouncedSearch, status: statusFilter }),
     [debouncedSearch, statusFilter]
   );
-  const { data: shipments, status, error, refetch } = useApi(fetcher);
+  const { data: shipments, status, error, refetch } = useApi(fetcher, [
+    debouncedSearch,
+    statusFilter,
+  ]);
   const update = useMutation((id, payload) => api.updateShipment(id, payload));
   const deliver = useMutation((id) => api.deliverShipment(id));
 

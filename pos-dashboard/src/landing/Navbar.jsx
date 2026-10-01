@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { BarChart3 } from "lucide-react";
+import { goTo } from "./navigation";
 
 const LINKS = [
   { id: "overview", label: "نمای کلی" },
@@ -8,13 +9,6 @@ const LINKS = [
   { id: "customizer", label: "ظاهر پنل" },
   { id: "specs", label: "ارقام" },
 ];
-
-export function goTo(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  if (window.__lenis) window.__lenis.scrollTo(el, { offset: -56 });
-  else el.scrollIntoView({ behavior: "smooth" });
-}
 
 export default function Navbar() {
   const { scrollY } = useScroll();

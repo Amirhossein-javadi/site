@@ -21,7 +21,7 @@ import {
   Textarea,
 } from "../components/ui";
 import StatusBadge from "../components/StatusBadge";
-import { useToast } from "../components/Toast";
+import { useToast } from "../components/toast-context";
 import { api } from "../lib/api";
 import {
   formatDate,
@@ -63,7 +63,10 @@ export default function Orders() {
     () => api.getOrders({ search: debouncedSearch, status: statusFilter }),
     [debouncedSearch, statusFilter]
   );
-  const { data: orders, status, error, refetch } = useApi(listFetcher);
+  const { data: orders, status, error, refetch } = useApi(listFetcher, [
+    debouncedSearch,
+    statusFilter,
+  ]);
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -157,7 +160,7 @@ function OrderDrawer({ orderId, onClose, onChanged, toast }) {
     },
     [orderId]
   );
-  const { data: snapshot, status, error, refetch } = useApi(fetcher);
+  const { data: snapshot, status, error, refetch } = useApi(fetcher, [orderId]);
   const order = snapshot?.order;
   const latestPayment = snapshot?.payments?.[0] ?? null;
 
@@ -398,7 +401,7 @@ function CreateOrderModal({ open, onClose, onCreated, toast }) {
         : Promise.resolve(null),
     [open]
   );
-  const { data: options, status, error, refetch } = useApi(optionsFetcher);
+  const { data: options, status, error, refetch } = useApi(optionsFetcher, [open]);
 
   const [contract, setContract] = useState("");
   const [warehouse, setWarehouse] = useState("");

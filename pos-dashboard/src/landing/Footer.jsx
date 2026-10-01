@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { goTo } from "./Navbar";
+import { goTo } from "./navigation";
 
 const COLS = [
   { title: "سامانه", items: [["features", "قابلیت‌ها"], ["customizer", "ظاهر پنل"], ["specs", "ارقام"]] },

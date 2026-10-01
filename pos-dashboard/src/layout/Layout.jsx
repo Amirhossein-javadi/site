@@ -4,15 +4,13 @@ import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 
 export default function Layout({ children }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-
-  // با تغییر مسیر، سایدبار موبایل نباید باز بماند.
-  useEffect(() => setMobileOpen(false), [location.pathname]);
+  const [mobileOpenPath, setMobileOpenPath] = useState(null);
+  const mobileOpen = mobileOpenPath === location.pathname;
 
   useEffect(() => {
     if (!mobileOpen) return undefined;
-    const onKey = (e) => e.key === "Escape" && setMobileOpen(false);
+    const onKey = (e) => e.key === "Escape" && setMobileOpenPath(null);
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [mobileOpen]);
@@ -28,7 +26,7 @@ export default function Layout({ children }) {
         <button
           aria-label="بستن منو"
           className="fixed inset-0 z-40 bg-black/65 backdrop-blur-sm md:hidden"
-          onClick={() => setMobileOpen(false)}
+          onClick={() => setMobileOpenPath(null)}
         />
       )}
 
@@ -37,11 +35,11 @@ export default function Layout({ children }) {
           mobileOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"
         }`}
       >
-        <Sidebar onNavigate={() => setMobileOpen(false)} />
+        <Sidebar onNavigate={() => setMobileOpenPath(null)} />
       </div>
 
       <div className="relative z-10 flex min-w-0 flex-1 flex-col">
-        <Topbar onMenuClick={() => setMobileOpen(true)} />
+        <Topbar onMenuClick={() => setMobileOpenPath(location.pathname)} />
         <main className="flex-1 px-4 py-6 sm:px-7 sm:py-8 xl:px-10">
           <div className="mx-auto max-w-[1440px] animate-fade-up">{children}</div>
         </main>

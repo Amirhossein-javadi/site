@@ -27,7 +27,7 @@ export default function Credits() {
       : Promise.resolve({ entries: [], balance: null }),
     [contractId]
   );
-  const { data, status, error, refetch } = useApi(fetcher);
+  const { data, status, error, refetch } = useApi(fetcher, [contractId]);
   const contractOptions = [
     { value: "", label: "انتخاب قرارداد" },
     ...(contracts.data ?? []).map((contract) => ({

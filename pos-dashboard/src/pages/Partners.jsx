@@ -18,7 +18,7 @@ import {
   StatCard,
   TableSkeleton,
 } from "../components/ui";
-import { useToast } from "../components/Toast";
+import { useToast } from "../components/toast-context";
 import { api } from "../lib/api";
 import { formatNumber, useApi, useDebounced, useMutation } from "../lib/hooks";
 
@@ -151,7 +151,11 @@ export function PartnerDirectory({ type }) {
     () => config.fetch({ search: debouncedSearch, ...config.filter(filter) }),
     [config, debouncedSearch, filter]
   );
-  const { data: records, status, error, refetch } = useApi(listFetcher);
+  const { data: records, status, error, refetch } = useApi(listFetcher, [
+    config,
+    debouncedSearch,
+    filter,
+  ]);
   const save = useMutation((id, payload) =>
     id ? config.update(id, payload) : config.create(payload)
   );

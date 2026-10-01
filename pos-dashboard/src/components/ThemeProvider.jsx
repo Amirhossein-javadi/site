@@ -1,6 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-
-const ThemeContext = createContext(null);
+import { useEffect, useMemo, useState } from "react";
+import { ThemeContext } from "./theme-context";
 const STORAGE_KEY = "pos-dashboard-theme";
 
 function getInitialTheme() {
@@ -28,10 +27,4 @@ export function ThemeProvider({ children }) {
 
   const value = useMemo(() => ({ theme, setTheme }), [theme]);
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
-}
-
-export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (!context) throw new Error("useTheme must be used inside ThemeProvider");
-  return context;
 }
