@@ -71,6 +71,7 @@ python manage.py test
 | `inventory` | Warehouse، InventoryItem، DeviceSerial، InventoryLedger + سرویس‌های اتمیک |
 | `contracts` | قرارداد نمایندگان + بررسی اعتبار (`is_valid_for_ordering`) |
 | `orders` | Order، OrderItem، OrderStatusHistory + ماشین‌حالت وضعیت |
+| `orders.fulfillment` | رهگیری Shipment، درخواست مرجوعی، تأیید و دریافت امن کالا |
 | `pricing` | ExchangeRate + ProformaInvoice تغییرناپذیر (Snapshot) |
 | `payments` | Payment با Idempotency + انتزاع درگاه (`gateways.py`) |
 | `finance` | دفتر مالی هر قرارداد (بدهکار/بستانکار) |
@@ -109,7 +110,7 @@ GET  /api/warehouses/
 GET  /api/inventory/          ?warehouse=  ?low_stock=true
 GET  /api/serials/            ?status=  ?warehouse=
 GET  /api/inventory-ledger/
-POST /api/inventory/reserve/  /release/  /issue/
+POST /api/inventory/receive/  /reserve/  /release/  /issue/
 
 GET  /api/contracts/
 GET/POST       /api/suppliers/          ?search=  ?status=active|suspended
@@ -120,6 +121,13 @@ GET  /api/orders/             ?status=  ?contract=
 POST /api/orders/
 POST /api/orders/{id}/cancel/
 POST /api/orders/{id}/transition/   {"to_status": "confirmed"}
+GET /api/shipments/                فهرست مرسوله‌ها
+GET/PATCH /api/shipments/{id}/     مشاهده/ویرایش اطلاعات رهگیری
+POST /api/shipments/{id}/deliver/  ثبت تحویل و تغییر وضعیت سفارش
+GET/POST /api/returns/             ایجاد و پیگیری درخواست مرجوعی
+POST /api/returns/{id}/approve/    تأیید درخواست مرجوعی
+POST /api/returns/{id}/reject/     رد درخواست مرجوعی
+POST /api/returns/{id}/receive/    دریافت کالا و ثبت ورود مجدد موجودی سالم
 
 GET  /api/exchange-rates/
 GET  /api/proforma-invoices/       ?order=<id>
@@ -133,13 +141,15 @@ GET  /api/finance/ledger/     ?contract=
 GET  /api/finance/balance/    ?contract=
 ```
 
-## کارهای باقی‌مانده (فاز بعد)
+تمام endpointهای API به توکن ورود نیاز دارند و queryهای وابسته به شرکت به
+Tenant کاربر محدود می‌شوند. گروه‌های کالا و برندها و نرخ ارز داده‌های مشترک
+سامانه‌اند. پیش‌فاکتور و دفترهای مالی و انبار فقط از مسیر سرویس‌های
+افزودنی‌شان تغییر می‌کنند.
 
-- دسترسی چندشرکتی: API تأمین‌کنندگان و مشتریان به ورود نیاز دارد و داده‌ها
-  را بر اساس شرکت کاربر محدود می‌کند. این محدودیت باید در ViewSetهای دیگر
-  هم پیش از استفاده چندشرکتی اعمال شود.
+## موارد بیرون از این فاز
+
 - درگاه واقعی پرداخت (`apps/payments/gateways.py` — فقط یک کلاس جدید
   اضافه کنید، services.py و views.py دست نمی‌خورند).
-- مدل مستقل `AgentCompany`؛ `Contract.agent_name` و `OrderItem` باید به
-  آن وصل شوند.
 - گزارش‌گیری (خروجی Excel/CSV از `finance.ledger`).
+- تسویه نقدی مرجوعی؛ درگاه فعلی Mock است و دریافت مرجوعی فقط موجودی/رهگیری
+  انبار را ثبت می‌کند.
