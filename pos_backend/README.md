@@ -138,6 +138,7 @@ POST /api/payments/create/    {"proforma": <id>, "idempotency_key": "..."}
 POST /api/payments/{id}/verify/     {"outcome": "success"}
 
 GET  /api/finance/ledger/     ?contract=
+GET  /api/finance/ledger/export/  ?contract=  ?from_date=YYYY-MM-DD  ?to_date=YYYY-MM-DD
 GET  /api/finance/balance/    ?contract=
 ```
 
@@ -150,6 +151,10 @@ Tenant کاربر محدود می‌شوند. گروه‌های کالا و بر
 
 - درگاه واقعی پرداخت (`apps/payments/gateways.py` — فقط یک کلاس جدید
   اضافه کنید، services.py و views.py دست نمی‌خورند).
-- گزارش‌گیری (خروجی Excel/CSV از `finance.ledger`).
 - تسویه نقدی مرجوعی؛ درگاه فعلی Mock است و دریافت مرجوعی فقط موجودی/رهگیری
   انبار را ثبت می‌کند.
+
+خروجی CSV دفتر مالی در `/api/finance/ledger/export/` موجود است. فیلترهای
+`contract`، `from_date` و `to_date` با فهرست دفتر یکسان‌اند؛ بازه تاریخ
+شامل هر دو روز ابتدا و انتهاست. فایل UTF-8 با BOM ساخته می‌شود تا متن
+فارسی در Excel درست نمایش داده شود.

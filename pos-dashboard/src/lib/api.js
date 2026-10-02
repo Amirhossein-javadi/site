@@ -80,6 +80,43 @@ async function request(path, options = {}) {
   return body;
 }
 
+async function downloadFile(path) {
+  const headers = {};
+  const token = getToken();
+  if (token) headers.Authorization = `Token ${token}`;
+
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, { headers });
+  } catch {
+    throw new ApiError("اتصال به سرور برقرار نشد. از اجرای بک‌اند مطمئن شوید.");
+  }
+
+  if (response.status === 401) {
+    forceLogout();
+    throw new ApiError("نشست شما منقضی شده است. دوباره وارد شوید.", {
+      status: 401,
+    });
+  }
+
+  if (!response.ok) {
+    let body = null;
+    try {
+      body = await response.json();
+    } catch {
+      body = null;
+    }
+    throw new ApiError(extractErrorMessage(body, response.status, path), {
+      status: response.status,
+      code: body?.error?.code,
+    });
+  }
+
+  const disposition = response.headers.get("Content-Disposition") || "";
+  const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1];
+  return { blob: await response.blob(), filename: filename || "report.csv" };
+}
+
 /** لیست‌ها ممکن است آرایه خام یا صفحه‌بندی‌شده DRF باشند. */
 function toList(body) {
   if (Array.isArray(body)) return body;
@@ -174,9 +211,14 @@ export const api = {
     post(`/payments/${id}/verify/`, { outcome }),
 
   // --- مالی ---
-  getLedgerEntries: (contract) => getList("/finance/ledger/", { contract }),
+  getLedgerEntries: (filters = {}) =>
+    getList("/finance/ledger/", typeof filters === "string" || typeof filters === "number"
+      ? { contract: filters }
+      : filters),
   getContractBalance: (contract) =>
     request(withQuery("/finance/balance/", { contract })),
+  exportLedgerCsv: (filters = {}) =>
+    downloadFile(withQuery("/finance/ledger/export/", filters)),
 
   // --- تامین‌کنندگان ---
   getSuppliers: ({ search, status } = {}) =>
