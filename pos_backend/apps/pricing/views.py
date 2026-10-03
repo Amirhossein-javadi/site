@@ -1,8 +1,11 @@
 from rest_framework import status, viewsets
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.tenants.querysets import for_user_tenant
+from apps.users.models import User
+from apps.users.permissions import require_roles
 
 from . import services
 from .models import ExchangeRate, ProformaInvoice
@@ -33,6 +36,7 @@ class ProformaInvoiceViewSet(viewsets.ReadOnlyModelViewSet):
             ProformaInvoice.objects.select_related("order").prefetch_related("lines"),
             self.request.user,
             lookup="order__tenant_id",
+            agent_lookup="order__contract__agent_id",
         )
         order_id = self.request.query_params.get("order")
         if order_id:
@@ -41,8 +45,16 @@ class ProformaInvoiceViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def issue_proforma(request):
     """POST /api/proforma-invoices/issue/   {"order": <id>}"""
+    require_roles(
+        request.user,
+        User.Role.SUPER_ADMIN,
+        User.Role.FINANCE,
+        User.Role.SALES_MANAGER,
+        User.Role.SALES_EXPERT,
+    )
     input_serializer = IssueProformaSerializer(data=request.data)
     input_serializer.is_valid(raise_exception=True)
 

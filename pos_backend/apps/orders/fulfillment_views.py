@@ -5,6 +5,8 @@ from rest_framework.response import Response
 
 from apps.inventory.services import SerialConflictError
 from apps.tenants.querysets import for_user_tenant
+from apps.users.models import User
+from apps.users.permissions import require_roles
 
 from . import fulfillment
 from .fulfillment_serializers import (
@@ -33,20 +35,42 @@ class ShipmentViewSet(
     """Shipment tracking data; delivery changes the linked order lifecycle."""
 
     serializer_class = ShipmentSerializer
+    write_roles = (
+        User.Role.SUPER_ADMIN,
+        User.Role.WAREHOUSE,
+        User.Role.SALES_MANAGER,
+    )
     filter_backends = [SearchFilter]
     search_fields = ["order__order_number", "tracking_number", "carrier"]
 
     def get_queryset(self):
         queryset = for_user_tenant(
-            Shipment.objects.select_related("order", "order__contract"), self.request.user
+            Shipment.objects.select_related("order", "order__contract"),
+            self.request.user,
+            agent_lookup="order__contract__agent_id",
         )
         status_filter = self.request.query_params.get("status")
         if status_filter in Shipment.Status.values:
             queryset = queryset.filter(status=status_filter)
         return queryset
 
+    def update(self, request, *args, **kwargs):
+        require_roles(
+            request.user,
+            User.Role.SUPER_ADMIN,
+            User.Role.WAREHOUSE,
+            User.Role.SALES_MANAGER,
+        )
+        return super().update(request, *args, **kwargs)
+
     @action(detail=True, methods=["post"])
     def deliver(self, request, pk=None):
+        require_roles(
+            request.user,
+            User.Role.SUPER_ADMIN,
+            User.Role.WAREHOUSE,
+            User.Role.SALES_MANAGER,
+        )
         shipment = self.get_object()
         try:
             shipment = fulfillment.deliver_shipment(
@@ -66,6 +90,14 @@ class ReturnRequestViewSet(
     """Return request, decision and warehouse intake endpoints."""
 
     serializer_class = ReturnRequestSerializer
+    write_roles = (
+        User.Role.SUPER_ADMIN,
+        User.Role.AGENT,
+        User.Role.SALES_MANAGER,
+        User.Role.SALES_EXPERT,
+        User.Role.FINANCE,
+        User.Role.WAREHOUSE,
+    )
     filter_backends = [SearchFilter]
     search_fields = ["return_number", "order__order_number", "reason"]
 
@@ -74,6 +106,7 @@ class ReturnRequestViewSet(
             ReturnRequest.objects.select_related("order", "requested_by")
             .prefetch_related("items", "items__order_item", "items__order_item__variant"),
             self.request.user,
+            agent_lookup="order__contract__agent_id",
         )
         status_filter = self.request.query_params.get("status")
         if status_filter in ReturnRequest.Status.values:
@@ -84,12 +117,26 @@ class ReturnRequestViewSet(
         return queryset
 
     def create(self, request, *args, **kwargs):
+        require_roles(
+            request.user,
+            User.Role.SUPER_ADMIN,
+            User.Role.AGENT,
+            User.Role.SALES_MANAGER,
+            User.Role.SALES_EXPERT,
+        )
         input_serializer = CreateReturnSerializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
         payload = input_serializer.validated_data
         if (
             not request.user.is_superuser
             and payload["order"].tenant_id != request.user.tenant_id
+        ):
+            from django.http import Http404
+
+            raise Http404
+        if (
+            request.user.role == User.Role.AGENT
+            and payload["order"].contract.agent_id != request.user.agent_company_id
         ):
             from django.http import Http404
 
@@ -120,6 +167,12 @@ class ReturnRequestViewSet(
         return self._decide(request, approved=False)
 
     def _decide(self, request, *, approved):
+        require_roles(
+            request.user,
+            User.Role.SUPER_ADMIN,
+            User.Role.SALES_MANAGER,
+            User.Role.FINANCE,
+        )
         instance = self.get_object()
         input_serializer = ReturnDecisionSerializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
@@ -136,6 +189,11 @@ class ReturnRequestViewSet(
 
     @action(detail=True, methods=["post"])
     def receive(self, request, pk=None):
+        require_roles(
+            request.user,
+            User.Role.SUPER_ADMIN,
+            User.Role.WAREHOUSE,
+        )
         instance = self.get_object()
         try:
             instance = fulfillment.receive_return(

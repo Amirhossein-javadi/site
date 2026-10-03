@@ -2,11 +2,13 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { Boxes, LogOut } from "lucide-react";
 import { navGroups } from "../data/nav";
 import { logout } from "../lib/auth";
+import { api } from "../lib/api";
 
 export default function Sidebar({ onNavigate }) {
   const navigate = useNavigate();
 
   function handleLogout() {
+    void api.logout().catch(() => {});
     logout();
     navigate("/login", { replace: true });
   }

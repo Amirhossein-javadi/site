@@ -4,7 +4,9 @@
 """
 
 from pathlib import Path
+from urllib.parse import urlsplit
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -13,7 +15,27 @@ environ.Env.read_env(BASE_DIR / ".env")
 
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 DEBUG = env("DEBUG")
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+ALLOWED_HOSTS = env.list(
+    "DJANGO_ALLOWED_HOSTS",
+    default=["localhost", "127.0.0.1"] if DEBUG else [],
+)
+
+if not DEBUG:
+    if len(SECRET_KEY) < 50 or SECRET_KEY == "change-me-to-a-random-50-char-string":
+        raise ImproperlyConfigured(
+            "برای محیط غیرتوسعه، DJANGO_SECRET_KEY باید یک کلید تصادفی و حداقل ۵۰ نویسه‌ای باشد."
+        )
+    if not ALLOWED_HOSTS:
+        raise ImproperlyConfigured(
+            "در محیط غیرتوسعه، DJANGO_ALLOWED_HOSTS را با دامنه‌های واقعی سایت تنظیم کنید."
+        )
+    if "*" in ALLOWED_HOSTS or any(
+        host.lower() in {"localhost", "127.0.0.1", "[::1]"}
+        for host in ALLOWED_HOSTS
+    ):
+        raise ImproperlyConfigured(
+            "در محیط غیرتوسعه، DJANGO_ALLOWED_HOSTS باید فقط دامنه‌های واقعی سایت را داشته باشد."
+        )
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -86,7 +108,13 @@ WSGI_APPLICATION = "config.wsgi.application"
 # رویش ساخته شده، روی SQLite واقعاً برقرار نیست؛ SQLite فقط برای توسعه
 # تک‌کاربره راحت است. قبل از هر تست بار واقعی یا استقرار، DB_ENGINE باید
 # postgres باشد.
-if env("DB_ENGINE", default="sqlite") == "postgres":
+DB_ENGINE = env("DB_ENGINE", default="sqlite")
+if not DEBUG and DB_ENGINE != "postgres":
+    raise ImproperlyConfigured(
+        "برای اجرای غیرتوسعه از PostgreSQL استفاده کنید؛ SQLite فقط برای توسعه محلی است."
+    )
+
+if DB_ENGINE == "postgres":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -96,7 +124,9 @@ if env("DB_ENGINE", default="sqlite") == "postgres":
             "HOST": env("DB_HOST", default="localhost"),
             "PORT": env("DB_PORT", default="5432"),
             "CONN_MAX_AGE": env.int("DB_CONN_MAX_AGE", default=60),
-            "OPTIONS": {"sslmode": env("DB_SSLMODE", default="prefer")},
+            "OPTIONS": {
+                "sslmode": env("DB_SSLMODE", default="prefer" if DEBUG else "require")
+            },
         }
     }
 else:
@@ -104,6 +134,15 @@ else:
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+
+if not DEBUG:
+    # Shared across web workers, so login throttling is not reset per process.
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+            "LOCATION": env("CACHE_TABLE_NAME", default="django_cache"),
         }
     }
 
@@ -133,22 +172,45 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=not DEBUG)
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_AGE = env.int("SESSION_COOKIE_AGE", default=3600)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=0 if DEBUG else 2592000)
-SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool(
+    "SECURE_HSTS_INCLUDE_SUBDOMAINS", default=not DEBUG
+)
+SECURE_REFERRER_POLICY = "same-origin"
+SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
+
+API_TOKEN_TTL_SECONDS = env.int("API_TOKEN_TTL_SECONDS", default=12 * 60 * 60)
+if API_TOKEN_TTL_SECONDS <= 0:
+    raise ImproperlyConfigured("API_TOKEN_TTL_SECONDS باید عددی بزرگ‌تر از صفر باشد.")
+API_THROTTLE_NUM_PROXIES = env.int("API_THROTTLE_NUM_PROXIES", default=0)
+if API_THROTTLE_NUM_PROXIES < 0:
+    raise ImproperlyConfigured("API_THROTTLE_NUM_PROXIES نمی‌تواند منفی باشد.")
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
+        "apps.users.permissions.RoleBasedWritePermission",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
+        "apps.users.authentication.ExpiringTokenAuthentication",
     ],
+    "DEFAULT_THROTTLE_RATES": {"login": "5/minute"},
+    "NUM_PROXIES": API_THROTTLE_NUM_PROXIES,
 }
 
 # --- CORS: اجازه دسترسی از سرور Dev فرانت‌اند (Vite) ---
 CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS",
-    default=["http://localhost:5173", "http://127.0.0.1:5173"],
+    default=["http://localhost:5173", "http://127.0.0.1:5173"] if DEBUG else [],
 )
+if not DEBUG:
+    # مقادیر توسعه‌ای نمونه نباید با کپی .env.example به سایت زنده راه پیدا کنند.
+    CORS_ALLOWED_ORIGINS = [
+        origin for origin in CORS_ALLOWED_ORIGINS
+        if urlsplit(origin).scheme == "https"
+        and urlsplit(origin).hostname not in {"localhost", "127.0.0.1", "::1"}
+    ]
 CORS_EXPOSE_HEADERS = ["Content-Disposition"]

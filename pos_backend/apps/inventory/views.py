@@ -6,6 +6,7 @@ from rest_framework.response import Response
 
 from apps.catalog.models import ProductVariant
 from apps.tenants.querysets import for_user_tenant
+from apps.users.models import User
 
 from . import services
 from .models import DeviceSerial, InventoryItem, InventoryLedger, Warehouse
@@ -44,6 +45,7 @@ class InventoryItemViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     serializer_class = InventoryItemSerializer
+    write_roles = (User.Role.SUPER_ADMIN, User.Role.WAREHOUSE)
     filter_backends = [SearchFilter]
     search_fields = ["variant__sku", "variant__product__name", "warehouse__name"]
 
@@ -185,6 +187,11 @@ class DeviceSerialViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     serializer_class = DeviceSerialSerializer
+    read_roles = (
+        User.Role.SUPER_ADMIN,
+        User.Role.SALES_MANAGER,
+        User.Role.WAREHOUSE,
+    )
     filter_backends = [SearchFilter]
     search_fields = ["serial_number", "variant__sku", "variant__product__name"]
 
@@ -209,6 +216,11 @@ class InventoryLedgerViewSet(viewsets.ReadOnlyModelViewSet):
     """دفتر تغییرات موجودی — فقط خواندنی، چون append-only است."""
 
     serializer_class = InventoryLedgerSerializer
+    read_roles = (
+        User.Role.SUPER_ADMIN,
+        User.Role.SALES_MANAGER,
+        User.Role.WAREHOUSE,
+    )
     def get_queryset(self):
         return for_user_tenant(
             InventoryLedger.objects.select_related(

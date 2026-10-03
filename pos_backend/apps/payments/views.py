@@ -1,8 +1,13 @@
+from django.conf import settings
 from rest_framework import status, viewsets
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.tenants.querysets import for_user_tenant
+from apps.users.models import User
+from apps.users.permissions import require_roles
 
 from . import services
 from .models import Payment
@@ -22,12 +27,23 @@ def _error(message, code="VALIDATION_ERROR", http_status=status.HTTP_400_BAD_REQ
 
 class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PaymentSerializer
+    read_roles = (
+        User.Role.SUPER_ADMIN,
+        User.Role.FINANCE,
+        User.Role.SALES_MANAGER,
+    )
+    write_roles = (
+        User.Role.SUPER_ADMIN,
+        User.Role.FINANCE,
+        User.Role.SALES_MANAGER,
+    )
 
     def get_queryset(self):
         queryset = for_user_tenant(
             Payment.objects.select_related("proforma", "proforma__order"),
             self.request.user,
             lookup="proforma__order__tenant_id",
+            agent_lookup="proforma__order__contract__agent_id",
         )
         proforma_id = self.request.query_params.get("proforma")
         order_id = self.request.query_params.get("order")
@@ -45,7 +61,15 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
         در دنیای واقعی این همان چیزی است که Webhook درگاه یا صفحه بازگشت
         کاربر صدا می‌زند؛ اینجا برای محیط توسعه دستی صدا زده می‌شود.
         """
+        require_roles(
+            request.user,
+            User.Role.SUPER_ADMIN,
+            User.Role.FINANCE,
+            User.Role.SALES_MANAGER,
+        )
         payment = self.get_object()
+        if payment.gateway == "mock" and not settings.DEBUG:
+            raise PermissionDenied("تأیید پرداخت آزمایشی فقط در محیط توسعه فعال است.")
         input_serializer = VerifyPaymentSerializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
 
@@ -56,11 +80,21 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def create_payment_intent(request):
     """POST /api/payments/create/"""
+    require_roles(
+        request.user,
+        User.Role.SUPER_ADMIN,
+        User.Role.FINANCE,
+        User.Role.SALES_MANAGER,
+    )
     input_serializer = CreatePaymentIntentSerializer(data=request.data)
     input_serializer.is_valid(raise_exception=True)
     payload = input_serializer.validated_data
+
+    if payload.get("gateway", "mock") == "mock" and not settings.DEBUG:
+        raise PermissionDenied("درگاه آزمایشی فقط در محیط توسعه فعال است.")
 
     if (
         not request.user.is_superuser

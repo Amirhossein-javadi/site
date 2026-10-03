@@ -1,7 +1,20 @@
 import { forceLogout, getToken } from "./auth";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  `${import.meta.env.DEV ? "http://localhost:8000" : window.location.origin}/api`
+).replace(/\/$/, "");
+const isLocalHost = ["localhost", "127.0.0.1", "::1", "[::1]"].includes(
+  window.location.hostname
+);
+
+if (
+  (window.location.protocol === "https:" &&
+    new URL(API_BASE_URL, window.location.href).protocol !== "https:") ||
+  (!import.meta.env.DEV && !isLocalHost && window.location.protocol !== "https:")
+) {
+  throw new Error("داشبورد و سرور API باید از اتصال امن HTTPS استفاده کنند.");
+}
 
 /**
  * خطاهای بک‌اند سه شکل دارند و هر سه باید به یک پیام خوانا تبدیل شوند:
@@ -143,6 +156,7 @@ const getList = (path, params) => request(withQuery(path, params)).then(toList);
 export const api = {
   // --- احراز هویت ---
   login: (email, password) => post("/login/", { username: email, password }),
+  logout: () => post("/logout/"),
 
   // --- کاتالوگ ---
   getProducts: (search) => getList("/products/", { search }),

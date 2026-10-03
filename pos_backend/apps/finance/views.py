@@ -11,6 +11,8 @@ from rest_framework.response import Response
 
 from apps.contracts.models import Contract
 from apps.tenants.querysets import for_user_tenant
+from apps.users.models import User
+from apps.users.permissions import require_roles
 
 from . import services
 from .models import LedgerEntry
@@ -22,6 +24,7 @@ def _ledger_queryset(user, params):
         LedgerEntry.objects.select_related("contract"),
         user,
         lookup="contract__tenant_id",
+        agent_lookup="contract__agent_id",
     )
 
     contract_id = params.get("contract")
@@ -52,6 +55,11 @@ class LedgerEntryViewSet(viewsets.ReadOnlyModelViewSet):
     """Filter ledger rows by contract and an inclusive date range."""
 
     serializer_class = LedgerEntrySerializer
+    read_roles = (
+        User.Role.SUPER_ADMIN,
+        User.Role.FINANCE,
+        User.Role.SALES_MANAGER,
+    )
 
     def get_queryset(self):
         return _ledger_queryset(self.request.user, self.request.query_params)
@@ -73,6 +81,12 @@ def _safe_csv_cell(value):
 @api_view(["GET"])
 def ledger_export_csv(request):
     """Export the same tenant-scoped ledger filters as the list endpoint."""
+    require_roles(
+        request.user,
+        User.Role.SUPER_ADMIN,
+        User.Role.FINANCE,
+        User.Role.SALES_MANAGER,
+    )
     entries = _ledger_queryset(request.user, request.query_params)
     writer = csv.writer(_CsvEcho())
 
@@ -115,6 +129,12 @@ def ledger_export_csv(request):
 @api_view(["GET"])
 def contract_balance(request):
     """GET /api/finance/balance/?contract=<id>"""
+    require_roles(
+        request.user,
+        User.Role.SUPER_ADMIN,
+        User.Role.FINANCE,
+        User.Role.SALES_MANAGER,
+    )
     contract_id = request.query_params.get("contract")
     contract = get_object_or_404(
         for_user_tenant(Contract.objects.all(), request.user), pk=contract_id
