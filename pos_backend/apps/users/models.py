@@ -67,6 +67,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name="شرکت (Tenant)",
         help_text="مرز Multi-tenancy؛ فقط برای Superuser پلتفرمی خالی می‌ماند.",
     )
+    agent_company = models.ForeignKey(
+        "tenants.AgentCompany",
+        on_delete=models.PROTECT,
+        related_name="users",
+        blank=True,
+        null=True,
+        verbose_name="شرکت نماینده",
+        help_text="برای حساب‌های نقش نماینده الزامی است.",
+    )
 
     is_active = models.BooleanField(default=True, verbose_name="فعال")
     is_staff = models.BooleanField(
@@ -95,6 +104,13 @@ class User(AbstractBaseUser, PermissionsMixin):
                 raise ValidationError({"tenant": "برای کاربران غیر Superuser، Tenant الزامی است."})
             if not self.role:
                 raise ValidationError({"role": "برای کاربران غیر Superuser، Role الزامی است."})
+        if self.role == self.Role.AGENT:
+            if not self.agent_company_id:
+                raise ValidationError({"agent_company": "برای نقش نماینده، شرکت نماینده الزامی است."})
+            if self.tenant_id and self.agent_company.tenant_id != self.tenant_id:
+                raise ValidationError({"agent_company": "شرکت نماینده باید متعلق به Tenant کاربر باشد."})
+        elif self.agent_company_id:
+            raise ValidationError({"agent_company": "این فیلد فقط برای نقش نماینده قابل استفاده است."})
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}".strip() or self.email

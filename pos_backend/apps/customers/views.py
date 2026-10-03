@@ -7,6 +7,8 @@ from rest_framework.response import Response
 
 from apps.tenants.models import AgentCompany
 from apps.tenants.querysets import for_user_tenant, tenant_for_user
+from apps.users.models import User
+from apps.users.permissions import RoleBasedWritePermission
 
 from .serializers import CustomerSerializer
 
@@ -24,12 +26,24 @@ class CustomerViewSet(
     serializer_class = CustomerSerializer
     filter_backends = [SearchFilter]
     search_fields = ["name"]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RoleBasedWritePermission]
+    read_roles = (
+        User.Role.SUPER_ADMIN,
+        User.Role.SALES_MANAGER,
+        User.Role.SALES_EXPERT,
+        User.Role.AGENT,
+    )
+    write_roles = (
+        User.Role.SUPER_ADMIN,
+        User.Role.SALES_MANAGER,
+        User.Role.SALES_EXPERT,
+    )
 
     def get_queryset(self):
         queryset = for_user_tenant(
             AgentCompany.objects.annotate(contracts_count=Count("contracts")),
             self.request.user,
+            agent_lookup="pk",
         )
         active = self.request.query_params.get("is_active")
         if active in ("true", "false"):

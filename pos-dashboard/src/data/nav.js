@@ -9,6 +9,7 @@ import {
   Receipt,
   CreditCard,
   Wallet,
+  FileDown,
   Send,
   RotateCcw,
 } from "lucide-react";
@@ -41,6 +42,7 @@ export const navGroups = [
     items: [
       { label: "پرداخت‌ها", path: "/payments", icon: CreditCard },
       { label: "اعتبارات", path: "/credits", icon: Wallet },
+      { label: "گزارش مالی", path: "/reports", icon: FileDown },
     ],
   },
   {

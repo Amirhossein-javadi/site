@@ -15,5 +15,7 @@ class ContractViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return for_user_tenant(
-            Contract.objects.select_related("tenant", "agent"), self.request.user
+            Contract.objects.select_related("tenant", "agent"),
+            self.request.user,
+            agent_lookup="agent_id",
         )

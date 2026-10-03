@@ -1,10 +1,14 @@
+from django.conf import settings
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 
 from apps.inventory.services import InsufficientStockError, SerialConflictError
 from apps.tenants.querysets import for_user_tenant
+from apps.users.models import User
+from apps.users.permissions import require_roles
 
 from . import services
 from .models import Order
@@ -37,11 +41,20 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     filter_backends = [SearchFilter]
+    write_roles = (
+        User.Role.SUPER_ADMIN,
+        User.Role.SALES_MANAGER,
+        User.Role.SALES_EXPERT,
+        User.Role.AGENT,
+        User.Role.WAREHOUSE,
+    )
     search_fields = ["order_number", "contract__number"]
 
     def get_queryset(self):
         qs = for_user_tenant(
-            Order.objects.select_related("contract", "warehouse"), self.request.user
+            Order.objects.select_related("contract", "warehouse"),
+            self.request.user,
+            agent_lookup="contract__agent_id",
         )
         status_param = self.request.query_params.get("status")
         if status_param:
@@ -58,12 +71,26 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 
     def create(self, request):
         """POST /api/orders/  — ثبت سفارش جدید."""
+        require_roles(
+            request.user,
+            User.Role.SUPER_ADMIN,
+            User.Role.SALES_MANAGER,
+            User.Role.SALES_EXPERT,
+            User.Role.AGENT,
+        )
         input_serializer = OrderCreateSerializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
         payload = input_serializer.validated_data
         if (
             not request.user.is_superuser
             and payload["contract"].tenant_id != request.user.tenant_id
+        ):
+            from django.http import Http404
+
+            raise Http404
+        if (
+            request.user.role == User.Role.AGENT
+            and payload["contract"].agent_id != request.user.agent_company_id
         ):
             from django.http import Http404
 
@@ -97,6 +124,13 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
         """POST /api/orders/{id}/cancel/"""
+        require_roles(
+            request.user,
+            User.Role.SUPER_ADMIN,
+            User.Role.SALES_MANAGER,
+            User.Role.SALES_EXPERT,
+            User.Role.AGENT,
+        )
         order = self.get_object()
         input_serializer = CancelInputSerializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
@@ -115,13 +149,45 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     def transition(self, request, pk=None):
         """POST /api/orders/{id}/transition/   {"to_status": "confirmed"}"""
         order = self.get_object()
+        require_roles(
+            request.user,
+            User.Role.SUPER_ADMIN,
+            User.Role.SALES_MANAGER,
+            User.Role.SALES_EXPERT,
+            User.Role.WAREHOUSE,
+        )
         input_serializer = TransitionInputSerializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
+        target_status = input_serializer.validated_data["to_status"]
+        if request.user.role == User.Role.WAREHOUSE and target_status not in {
+            Order.Status.PROCESSING,
+            Order.Status.SHIPPED,
+            Order.Status.DELIVERED,
+        }:
+            raise PermissionDenied("انباردار فقط می‌تواند مراحل آماده‌سازی و ارسال را ثبت کند.")
+        if request.user.role == User.Role.SALES_EXPERT and target_status in {
+            Order.Status.PROCESSING,
+            Order.Status.SHIPPED,
+            Order.Status.DELIVERED,
+        }:
+            raise PermissionDenied("این مرحله باید توسط مدیر فروش یا انبار ثبت شود.")
+        if target_status == Order.Status.CONFIRMED and not settings.DEBUG:
+            from apps.payments.models import Payment
+
+            if not Payment.objects.filter(
+                proforma__order=order,
+                status=Payment.Status.SUCCEEDED,
+            ).exists():
+                return _error(
+                    "سفارش تا زمان تأیید موفق پرداخت قابل تأیید نیست.",
+                    code="PAYMENT_REQUIRED",
+                    http_status=409,
+                )
 
         try:
             order = services.transition_status(
                 order=order,
-                to_status=input_serializer.validated_data["to_status"],
+                to_status=target_status,
                 user=request.user if request.user.is_authenticated else None,
                 note=input_serializer.validated_data.get("note", ""),
             )

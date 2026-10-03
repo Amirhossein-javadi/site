@@ -1,7 +1,20 @@
 import { forceLogout, getToken } from "./auth";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  `${import.meta.env.DEV ? "http://localhost:8000" : window.location.origin}/api`
+).replace(/\/$/, "");
+const isLocalHost = ["localhost", "127.0.0.1", "::1", "[::1]"].includes(
+  window.location.hostname
+);
+
+if (
+  (window.location.protocol === "https:" &&
+    new URL(API_BASE_URL, window.location.href).protocol !== "https:") ||
+  (!import.meta.env.DEV && !isLocalHost && window.location.protocol !== "https:")
+) {
+  throw new Error("داشبورد و سرور API باید از اتصال امن HTTPS استفاده کنند.");
+}
 
 /**
  * خطاهای بک‌اند سه شکل دارند و هر سه باید به یک پیام خوانا تبدیل شوند:
@@ -80,6 +93,43 @@ async function request(path, options = {}) {
   return body;
 }
 
+async function downloadFile(path) {
+  const headers = {};
+  const token = getToken();
+  if (token) headers.Authorization = `Token ${token}`;
+
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, { headers });
+  } catch {
+    throw new ApiError("اتصال به سرور برقرار نشد. از اجرای بک‌اند مطمئن شوید.");
+  }
+
+  if (response.status === 401) {
+    forceLogout();
+    throw new ApiError("نشست شما منقضی شده است. دوباره وارد شوید.", {
+      status: 401,
+    });
+  }
+
+  if (!response.ok) {
+    let body = null;
+    try {
+      body = await response.json();
+    } catch {
+      body = null;
+    }
+    throw new ApiError(extractErrorMessage(body, response.status, path), {
+      status: response.status,
+      code: body?.error?.code,
+    });
+  }
+
+  const disposition = response.headers.get("Content-Disposition") || "";
+  const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1];
+  return { blob: await response.blob(), filename: filename || "report.csv" };
+}
+
 /** لیست‌ها ممکن است آرایه خام یا صفحه‌بندی‌شده DRF باشند. */
 function toList(body) {
   if (Array.isArray(body)) return body;
@@ -106,6 +156,7 @@ const getList = (path, params) => request(withQuery(path, params)).then(toList);
 export const api = {
   // --- احراز هویت ---
   login: (email, password) => post("/login/", { username: email, password }),
+  logout: () => post("/logout/"),
 
   // --- کاتالوگ ---
   getProducts: (search) => getList("/products/", { search }),
@@ -174,9 +225,14 @@ export const api = {
     post(`/payments/${id}/verify/`, { outcome }),
 
   // --- مالی ---
-  getLedgerEntries: (contract) => getList("/finance/ledger/", { contract }),
+  getLedgerEntries: (filters = {}) =>
+    getList("/finance/ledger/", typeof filters === "string" || typeof filters === "number"
+      ? { contract: filters }
+      : filters),
   getContractBalance: (contract) =>
     request(withQuery("/finance/balance/", { contract })),
+  exportLedgerCsv: (filters = {}) =>
+    downloadFile(withQuery("/finance/ledger/export/", filters)),
 
   // --- تامین‌کنندگان ---
   getSuppliers: ({ search, status } = {}) =>

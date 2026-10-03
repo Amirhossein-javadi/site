@@ -3,6 +3,8 @@ from rest_framework.filters import SearchFilter
 from rest_framework.permissions import IsAuthenticated
 
 from apps.tenants.querysets import for_user_tenant, tenant_for_user
+from apps.users.models import User
+from apps.users.permissions import RoleBasedWritePermission
 
 from .models import Supplier
 from .serializers import SupplierSerializer
@@ -19,7 +21,17 @@ class SupplierViewSet(
     serializer_class = SupplierSerializer
     filter_backends = [SearchFilter]
     search_fields = ["name", "code", "contact_person", "phone"]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RoleBasedWritePermission]
+    read_roles = (
+        User.Role.SUPER_ADMIN,
+        User.Role.SALES_MANAGER,
+        User.Role.WAREHOUSE,
+    )
+    write_roles = (
+        User.Role.SUPER_ADMIN,
+        User.Role.SALES_MANAGER,
+        User.Role.WAREHOUSE,
+    )
 
     def get_queryset(self):
         queryset = for_user_tenant(

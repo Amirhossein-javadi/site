@@ -7,17 +7,17 @@ from .models import User
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     ordering = ("email",)
-    list_display = ("email", "first_name", "last_name", "role", "tenant", "is_staff")
+    list_display = ("email", "first_name", "last_name", "role", "tenant", "agent_company", "is_staff")
     search_fields = ("email", "first_name", "last_name")
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("اطلاعات فردی", {"fields": ("first_name", "last_name")}),
-        ("نقش و Tenant", {"fields": ("role", "tenant")}),
+        ("نقش و Tenant", {"fields": ("role", "tenant", "agent_company")}),
         ("دسترسی‌ها", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
     )
     add_fieldsets = (
         (None, {
             "classes": ("wide",),
-            "fields": ("email", "password1", "password2", "role", "tenant", "is_staff", "is_superuser"),
+            "fields": ("email", "password1", "password2", "role", "tenant", "agent_company", "is_staff", "is_superuser"),
         }),
     )
