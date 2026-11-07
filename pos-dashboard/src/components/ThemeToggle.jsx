@@ -11,7 +11,7 @@ export default function ThemeToggle({ compact = false }) {
   return (
     <div
       aria-label="انتخاب پوسته"
-      className="inline-flex items-center gap-0.5 rounded-xl border border-ink/[0.09] bg-ink/[0.035] p-1"
+      className="inline-flex items-center gap-0.5 rounded-lg border border-border/60 bg-surface p-1"
       role="group"
     >
       {options.map(({ value, label, icon: Icon }) => (
@@ -22,10 +22,10 @@ export default function ThemeToggle({ compact = false }) {
           aria-pressed={theme === value}
           title={`پوسته ${label}`}
           onClick={() => setTheme(value)}
-          className={`inline-flex h-8 items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold transition-colors ${
+          className={`inline-flex h-8 items-center justify-center gap-1.5 rounded-md px-2.5 text-xs font-semibold transition-colors ${
             theme === value
-              ? "bg-accent text-[#05243a] shadow-sm shadow-accent/20"
-              : "text-text-muted hover:text-text"
+              ? "bg-navy text-white"
+              : "text-text-muted hover:bg-surface3 hover:text-text"
           }`}
         >
           <Icon size={14} strokeWidth={2} />

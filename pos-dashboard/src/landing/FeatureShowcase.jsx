@@ -31,7 +31,7 @@ function ContractVisual() {
       <div className="mx-auto flex flex-col items-center">
         <svg viewBox="0 0 120 120" className="h-40 w-40 -rotate-90">
           <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="9" />
-          <motion.circle cx="60" cy="60" r="50" fill="none" stroke="#8fa8bd" strokeWidth="9" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 0.72 }} transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }} />
+          <motion.circle cx="60" cy="60" r="50" fill="none" stroke="#a9afb8" strokeWidth="9" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 0.72 }} transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }} />
         </svg>
         <p className="-mt-24 mb-14 text-2xl font-extrabold text-white">۷۲٪</p>
         <p className="text-xs text-ink/50">مصرف سقف دستگاه قرارداد</p>

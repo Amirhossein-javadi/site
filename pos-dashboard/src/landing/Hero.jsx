@@ -6,7 +6,7 @@ import { ArrowLeft, Play, X } from "lucide-react";
 // آدرس ویدیوی معرفی؛ خالی باشد پیام «به‌زودی» نمایش داده می‌شود.
 const FILM_SRC = "";
 
-export function DashboardMock({ accent = "#8fa8bd" }) {
+export function DashboardMock({ accent = "#b8bdc6" }) {
   const bars = [40, 64, 52, 78, 60, 92, 70];
   const stats = [["موجودی قابل فروش", "۱,۲۴۰"], ["رزرو شده", "۱۸۶"], ["قرارداد فعال", "۴۲"]];
   const rows = [["V72P-20418", "انبار مرکزی", "آزاد"], ["V72-11093", "نماینده ۱۴", "تحویل شده"], ["V72P-20419", "انبار مرکزی", "رزرو"], ["V72-11094", "انبار مرکزی", "آزاد"]];
@@ -125,7 +125,7 @@ export default function Hero() {
       <div ref={stageRef} className="relative mx-auto mt-16 max-w-5xl pb-24 [perspective:1400px] sm:mt-24">
         <motion.div style={{ scale, y: lift }} onMouseMove={onMove} onMouseLeave={onLeave}>
           <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-            className="rounded-[28px] bg-[#161617] p-2 shadow-[0_60px_120px_-30px_rgba(143,168,189,0.35)] ring-1 ring-ink/10 sm:p-3">
+            className="rounded-[28px] bg-[#161617] p-2 shadow-[0_60px_120px_-30px_rgba(185,190,198,0.25)] ring-1 ring-ink/10 sm:p-3">
             <DashboardMock />
           </motion.div>
         </motion.div>

@@ -13,6 +13,7 @@ export default {
         accent: "rgb(var(--color-accent) / <alpha-value>)",
         accentDim: "rgb(var(--color-accent-dim) / <alpha-value>)",
         accent2: "rgb(var(--color-accent-2) / <alpha-value>)",
+        navy: "rgb(var(--color-navy) / <alpha-value>)",
         "accent-soft": "rgb(var(--color-accent) / 0.14)",
         frost: "rgb(var(--color-frost) / <alpha-value>)",
         text: "rgb(var(--color-text) / <alpha-value>)",
@@ -32,7 +33,7 @@ export default {
         "3xl": "1.75rem",
       },
       backgroundImage: {
-        "accent-gradient": "linear-gradient(135deg, #127ebc 0%, #1668d2 100%)",
+        "accent-gradient": "linear-gradient(135deg, #39414d 0%, #151920 100%)",
         "accent-gradient-soft":
           "linear-gradient(135deg, rgba(211,223,230,0.14) 0%, rgba(75,90,108,0.2) 100%)",
         "surface-sheen":

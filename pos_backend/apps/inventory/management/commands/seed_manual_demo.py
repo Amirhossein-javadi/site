@@ -127,7 +127,7 @@ class Command(BaseCommand):
 
         contract = Contract.objects.get(number="DEMO-ACT-001")
         warehouse = Warehouse.objects.get(tenant=company, code="WH-TEH")
-        skus = ["VS-V72-WIFI-BK", "VS-V72-GPRS-BK", "VS-V72P-STD", "ACC-ROLL-10"]
+        skus = ["PAX-A920P-4G", "PAX-A920-4G", "PAX-D210-4G", "GEN-THERMAL-ROLL-10"]
         variants = {
             variant.sku: variant
             for variant in ProductVariant.objects.filter(sku__in=skus).select_related(

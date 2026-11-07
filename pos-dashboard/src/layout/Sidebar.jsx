@@ -14,23 +14,23 @@ export default function Sidebar({ onNavigate }) {
   }
 
   return (
-    <aside className="glass-strong flex h-full w-[276px] flex-col border-l border-border/20 shadow-[0_0_40px_-24px_rgba(4,21,41,.45)]">
+    <aside className="flex h-full w-[276px] flex-col border-l border-white/10 bg-[#0c1423] text-white shadow-2xl shadow-black/25">
       <div className="flex items-center gap-3 px-5 py-6">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-accent-gradient text-white shadow-[0_10px_26px_-10px_rgba(23,175,224,.7)]">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-[#101a2d]">
           <Boxes size={19} strokeWidth={2.1} />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-extrabold text-text">سپهر | پنل فروش</p>
-          <p className="truncate text-[11px] text-text-faint">مدیریت یکپارچه کسب‌وکار</p>
+          <p className="truncate text-sm font-extrabold text-white">سپهر</p>
+          <p className="truncate text-[10px] font-medium tracking-wide text-white/45">فروش و عملیات</p>
         </div>
       </div>
 
-      <div className="mx-5 h-px bg-gradient-to-l from-accent/30 to-transparent" />
+      <div className="mx-5 h-px bg-white/10" />
 
-      <nav className="no-scrollbar flex-1 overflow-y-auto px-3 py-5">
+      <nav className="no-scrollbar flex-1 overflow-y-auto px-3 py-6">
         {navGroups.map((group) => (
           <div key={group.label} className="mb-6 last:mb-0">
-            <p className="px-3 pb-2.5 text-[10px] font-extrabold tracking-[0.1em] text-text-faint">
+            <p className="px-3 pb-2.5 text-[10px] font-bold tracking-[0.12em] text-white/35">
               {group.label}
             </p>
             <ul className="space-y-0.5">
@@ -42,10 +42,10 @@ export default function Sidebar({ onNavigate }) {
                     onClick={onNavigate}
                     className={({ isActive }) =>
                       [
-                        "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-all duration-200",
+                        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-semibold transition-colors",
                         isActive
-                          ? "bg-accent/10 text-accent ring-1 ring-inset ring-accent/20"
-                          : "text-text-muted hover:bg-ink/[0.045] hover:text-text",
+                          ? "bg-white text-[#101a2d] shadow-sm"
+                          : "text-white/60 hover:bg-white/[0.08] hover:text-white",
                       ].join(" ")
                     }
                   >
@@ -59,20 +59,20 @@ export default function Sidebar({ onNavigate }) {
         ))}
       </nav>
 
-      <div className="border-t border-border/20 p-3">
-        <div className="flex items-center gap-3 rounded-xl px-2.5 py-2">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-sm font-extrabold text-accent ring-1 ring-inset ring-accent/20">
+      <div className="border-t border-white/10 p-3">
+        <div className="flex items-center gap-3 rounded-lg px-2.5 py-2">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1c2b46] text-sm font-extrabold text-white ring-1 ring-inset ring-white/10">
             س
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-bold text-text">کاربر سامانه</p>
-            <p className="truncate text-[11px] text-text-faint">نشست فعال</p>
+            <p className="truncate text-[12px] font-bold text-white">کاربر سامانه</p>
+            <p className="truncate text-[10px] text-white/40">نشست فعال</p>
           </div>
           <button
             onClick={handleLogout}
             aria-label="خروج از حساب"
             title="خروج از حساب"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-faint transition-colors hover:bg-danger/10 hover:text-danger"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/10 hover:text-white"
           >
             <LogOut size={16} strokeWidth={2.1} />
           </button>

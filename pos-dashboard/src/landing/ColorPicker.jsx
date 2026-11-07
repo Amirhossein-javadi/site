@@ -3,10 +3,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { DashboardMock } from "./Hero";
 
 const COLORS = [
-  { id: "space", name: "خاکستری فضایی", hex: "#8b93a7", note: "آرام و بی‌حاشیه برای کار روزانه انبار." },
-  { id: "silver", name: "نقره‌ای", hex: "#d3dfe6", note: "روشن و شفاف؛ ارقام حتی در نور زیاد خوانا می‌مانند." },
-  { id: "midnight", name: "نیمه‌شب", hex: "#4f7cff", note: "تاکید قوی روی اعداد و وضعیت‌ها." },
-  { id: "purple", name: "بنفش عمیق", hex: "#8b5cf6", note: "هویت بصری متمایز برای برند شما." },
+  { id: "space", name: "خاکستری فضایی", hex: "#8b8f98", note: "آرام و بی‌حاشیه برای کار روزانه انبار." },
+  { id: "silver", name: "نقره‌ای", hex: "#d1d5db", note: "روشن و شفاف؛ ارقام حتی در نور زیاد خوانا می‌مانند." },
+  { id: "midnight", name: "سورمه‌ای", hex: "#344056", note: "تاکید ملایم روی اعداد و وضعیت‌ها." },
+  { id: "graphite", name: "ذغالی", hex: "#4a4f58", note: "هماهنگ با ظاهر تیره و مینیمال پنل." },
 ];
 
 export default function ColorPicker() {

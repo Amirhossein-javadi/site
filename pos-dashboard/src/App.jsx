@@ -86,7 +86,7 @@ function NotFound() {
       </p>
       <a
         href="/"
-        className="mt-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-[#05243a] transition-transform hover:-translate-y-0.5"
+        className="mt-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-bg transition-transform hover:-translate-y-0.5"
       >
         بازگشت به صفحه اصلی
       </a>

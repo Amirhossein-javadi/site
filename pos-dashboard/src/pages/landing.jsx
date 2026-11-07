@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
+  ArrowUpLeft,
   Boxes,
   ChartNoAxesCombined,
   ClipboardCheck,
@@ -12,193 +13,200 @@ import {
 } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle";
 
-const FEATURES = [
-  { icon: Boxes, title: "کاتالوگ یکپارچه کالا", body: "محصول، نسخه، برند، کد کالا و قیمت پایه را در یک جا مدیریت کنید." },
-  { icon: ScanBarcode, title: "موجودی و سریال", body: "موجودی هر انبار، رزروها و شماره‌سریال دستگاه‌ها را زنده ببینید." },
-  { icon: FileText, title: "قرارداد و سفارش", body: "سقف قرارداد را کنترل کنید و سفارش را تا پیش‌فاکتور دنبال کنید." },
-  { icon: ClipboardCheck, title: "پیگیری عملیات", body: "وضعیت سفارش‌ها، پرداخت‌ها و هشدارهای مهم از پنل قابل پیگیری‌اند." },
+const MODULES = [
+  { icon: Boxes, number: "01", title: "کاتالوگ کالا", body: "محصول‌ها، نسخه‌ها، قیمت‌ها و کدهای کالا را یک‌جا مدیریت کنید." },
+  { icon: ScanBarcode, number: "02", title: "انبار و سریال", body: "موجودی هر انبار، رزروها و سریال تک‌تک دستگاه‌ها را ببینید." },
+  { icon: FileText, number: "03", title: "PSP و قرارداد", body: "مشتری‌های PSP، سقف خرید و اعتبار قراردادها را دنبال کنید." },
+  { icon: ShoppingCart, number: "04", title: "سفارش و مالی", body: "سفارش، پیش‌فاکتور، پرداخت و گزارش مالی به هم متصل‌اند." },
+];
+
+const FLOW = [
+  [Boxes, "تعریف دستگاه", "مدل و نسخه کارتخوان"],
+  [PackageCheck, "ورود به انبار", "موجودی و سریال"],
+  [FileText, "تخصیص قرارداد", "سقف خرید PSP"],
+  [Truck, "ارسال سفارش", "رهگیری تا تحویل"],
 ];
 
 export default function Landing() {
   return (
-    <div className="min-h-screen overflow-hidden bg-bg text-text">
-      <header className="sticky top-0 z-40 border-b border-border/20 bg-bg/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-4 px-5 sm:px-8">
-          <a href="#home" className="flex shrink-0 items-center gap-2.5 text-sm font-extrabold text-text">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-gradient text-white shadow-lg shadow-accent/20"><Boxes size={18} /></span>
-            <span>سپهر <span className="font-medium text-text-muted">| فروش و انبار</span></span>
+    <div dir="rtl" className="min-h-screen overflow-hidden bg-bg text-text">
+      <header className="border-b border-border/50 bg-bg">
+        <div className="mx-auto flex h-[76px] max-w-[1440px] items-center justify-between gap-5 px-5 sm:px-8">
+          <a href="#home" className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-navy text-white">
+              <Boxes size={19} />
+            </span>
+            <span>
+              <span className="block text-sm font-extrabold">سپهر</span>
+              <span className="block text-[10px] tracking-wide text-text-faint">فروش و عملیات</span>
+            </span>
           </a>
 
-          <nav className="hidden items-center gap-7 md:flex">
-            <a href="#features" className="text-xs font-semibold text-text-muted transition hover:text-accent">قابلیت‌ها</a>
-            <a href="#workflow" className="text-xs font-semibold text-text-muted transition hover:text-accent">گردش کار</a>
+          <nav className="hidden items-center gap-8 md:flex">
+            <a href="#modules" className="text-xs font-semibold text-text-muted transition hover:text-text">امکانات</a>
+            <a href="#flow" className="text-xs font-semibold text-text-muted transition hover:text-text">گردش کار</a>
           </nav>
 
-          <div className="flex shrink-0 items-center gap-2.5">
+          <div className="flex items-center gap-2.5">
             <ThemeToggle compact />
-            <Link to="/login" className="inline-flex items-center gap-2 rounded-xl bg-accent px-3.5 py-2.5 text-xs font-extrabold text-[#05243a] shadow-lg shadow-accent/20 transition hover:-translate-y-0.5 hover:bg-sky-500 sm:px-4">
-              <span className="hidden sm:inline">ورود به پنل</span><span className="sm:hidden">ورود</span><ArrowLeft size={14} />
+            <Link to="/login" className="inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-4 text-xs font-extrabold text-bg transition hover:bg-accentDim">
+              ورود به پنل <ArrowLeft size={15} />
             </Link>
           </div>
         </div>
       </header>
 
       <main id="home">
-        <section className="relative px-5 pb-16 pt-14 sm:px-8 sm:pb-24 sm:pt-20">
-          <div aria-hidden="true" className="pointer-events-none absolute -top-32 left-[14%] h-[500px] w-[500px] rounded-full bg-accent/10 blur-[140px]" />
-          <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
+        <section className="px-5 pb-16 pt-14 sm:px-8 sm:pb-24 sm:pt-20">
+          <div className="mx-auto grid max-w-[1440px] items-center gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
             <div className="max-w-xl">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/10 px-3.5 py-2 text-[11px] font-bold text-accent">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-md border border-navy/50 bg-navy/30 px-3 py-2 text-[10px] font-bold tracking-[0.1em] text-frost">
                 <ChartNoAxesCombined size={15} />
-                سامانه مدیریت فروش و عملیات
+                SEPEHR · OPERATIONS
               </div>
-              <h1 className="text-4xl font-extrabold leading-[1.35] tracking-tight text-text sm:text-5xl xl:text-[58px]">
-                از موجودی تا سفارش،<span className="block text-accent">همه‌چیز روشن است.</span>
+              <h1 className="text-4xl font-extrabold leading-[1.35] tracking-tight text-text sm:text-5xl xl:text-6xl">
+                فروش و انبار،<br />
+                <span className="text-frost">یک تصویر روشن.</span>
               </h1>
-              <p className="mt-5 max-w-lg text-sm leading-8 text-text-muted sm:text-base">
-                کالاها و انبارها را مدیریت کنید، سفارش مشتریان را با قراردادها هماهنگ کنید و مسیر فروش را از یک پنل دنبال کنید.
+              <p className="mt-6 max-w-lg text-sm leading-8 text-text-muted sm:text-base">
+                سامانه‌ی مدیریت پایانه‌های فروش؛ از ثبت مدل و سریال دستگاه تا قرارداد PSP، سفارش و تحویل.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Link to="/login" className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-extrabold text-[#05243a] shadow-xl shadow-accent/20 transition hover:-translate-y-0.5 hover:bg-sky-500">
-                  ورود به سامانه <ArrowLeft size={16} />
+                <Link to="/login" className="inline-flex h-12 items-center gap-2 rounded-lg bg-accent px-5 text-sm font-extrabold text-bg transition hover:bg-accentDim">
+                  ورود به مرکز عملیات <ArrowLeft size={16} />
                 </Link>
-                <a href="#features" className="rounded-xl border border-border/25 bg-surface px-5 py-3 text-sm font-bold text-text transition hover:border-accent/40 hover:text-accent">
-                  آشنایی با قابلیت‌ها
+                <a href="#modules" className="inline-flex h-12 items-center gap-2 rounded-lg border border-border/60 bg-surface px-5 text-sm font-bold text-text transition hover:border-frost/50 hover:bg-surface2">
+                  مشاهده امکانات <ArrowUpLeft size={16} />
                 </a>
               </div>
-              <div className="mt-9 flex flex-wrap gap-x-6 gap-y-3 text-xs font-medium text-text-muted">
-                <span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-success" />فارسی و راست‌به‌چپ</span>
-                <span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-success" />داده‌ها از سامانه شما</span>
-                <span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-success" />تم روشن و تیره</span>
+
+              <div className="mt-10 flex flex-wrap gap-x-7 gap-y-3 border-t border-border/50 pt-5 text-[11px] font-semibold text-text-muted">
+                <span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-frost" />کنترل سریال دستگاه</span>
+                <span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-frost" />سقف قرارداد PSP</span>
+                <span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-frost" />چند انبار و شعبه</span>
               </div>
             </div>
 
-            <DashboardPreview />
+            <OperationsPreview />
           </div>
         </section>
 
-        <section id="features" className="border-y border-border/15 bg-surface/45 px-5 py-16 sm:px-8 sm:py-20">
-          <div className="mx-auto max-w-7xl">
-            <div className="mb-9 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+        <section id="modules" className="border-y border-border/50 bg-surface px-5 py-16 sm:px-8 sm:py-20">
+          <div className="mx-auto max-w-[1440px]">
+            <div className="mb-9 grid gap-4 md:grid-cols-[1fr_0.7fr] md:items-end">
               <div>
-                <p className="mb-2 text-xs font-extrabold tracking-wide text-accent">ابزارهای روزانه‌ی شما</p>
-                <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">مدیریت فروش در یک نگاه</h2>
+                <p className="mb-2 text-[10px] font-bold tracking-[0.14em] text-frost">یک سامانه، چهار بخش اصلی</p>
+                <h2 className="text-2xl font-extrabold sm:text-3xl">از ورود کالا تا گزارش نهایی</h2>
               </div>
-              <p className="max-w-md text-sm leading-7 text-text-muted">اطلاعات عملیاتی در صفحه‌های مشخص و خوانا کنار هم قرار گرفته‌اند.</p>
+              <p className="max-w-lg text-sm leading-7 text-text-muted">هر بخش برای یک کار روزانه طراحی شده؛ داده‌ها بین انبار، فروش و مالی پیوسته می‌مانند.</p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {FEATURES.map(({ icon: Icon, title, body }, index) => (
-                <article key={title} className="rounded-2xl border border-border/20 bg-surface p-5 transition hover:-translate-y-1 hover:border-accent/35 hover:shadow-card">
-                  <span className="mb-5 flex h-11 w-11 items-center justify-center rounded-[14px] bg-accent/10 text-accent"><Icon size={20} /></span>
-                  <p className="mb-2 text-sm font-extrabold text-text">{title}</p>
-                  <p className="text-xs leading-6 text-text-muted">{body}</p>
-                  <p className="mt-5 text-[10px] font-bold text-text-faint">۰{index + 1}</p>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {MODULES.map(({ icon: Icon, number, title, body }) => (
+                <article key={number} className="group border border-border/55 bg-bg p-5 transition-colors hover:border-frost/50 hover:bg-navy/10 sm:p-6">
+                  <div className="mb-8 flex items-start justify-between">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-navy text-white"><Icon size={19} /></span>
+                    <span className="font-mono text-[11px] text-text-faint">{number}</span>
+                  </div>
+                  <h3 className="text-sm font-extrabold">{title}</h3>
+                  <p className="mt-2 text-xs leading-6 text-text-muted">{body}</p>
                 </article>
               ))}
             </div>
           </div>
         </section>
 
-        <section id="workflow" className="px-5 py-16 sm:px-8 sm:py-20">
-          <div className="mx-auto grid max-w-7xl gap-10 rounded-[26px] border border-accent/20 bg-gradient-to-br from-accent/10 via-surface to-surface p-6 sm:p-9 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+        <section id="flow" className="px-5 py-16 sm:px-8 sm:py-20">
+          <div className="mx-auto grid max-w-[1440px] gap-10 border border-border/55 bg-surface p-6 sm:p-9 lg:grid-cols-[0.75fr_1.25fr] lg:items-center">
             <div>
-              <p className="mb-2 text-xs font-extrabold text-accent">از ابتدا تا انتها</p>
-              <h2 className="text-2xl font-extrabold leading-relaxed sm:text-3xl">گردش کار شفاف،<br />تصمیم‌گیری سریع‌تر</h2>
-              <p className="mt-3 max-w-lg text-sm leading-7 text-text-muted">مراحل مرتبط به هم وصل‌اند تا تیم شما برای فهمیدن وضعیت سفارش یا کالا بین فایل‌ها جابه‌جا نشود.</p>
+              <p className="mb-2 text-[10px] font-bold tracking-[0.14em] text-frost">گردش کار یکپارچه</p>
+              <h2 className="text-2xl font-extrabold leading-relaxed sm:text-3xl">موجودی دقیق.<br />قرارداد شفاف.</h2>
+              <p className="mt-3 max-w-lg text-sm leading-7 text-text-muted">سفارش از موجودی قابل فروش کم می‌شود و هر جابه‌جایی در سوابق انبار ثبت می‌ماند.</p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <WorkflowStep icon={Boxes} index="۱" title="تعریف کالا" detail="محصول، نسخه و قیمت" />
-              <WorkflowStep icon={PackageCheck} index="۲" title="کنترل موجودی" detail="انبار، رزرو و سریال" />
-              <WorkflowStep icon={ShoppingCart} index="۳" title="ثبت سفارش" detail="قرارداد و وضعیت سفارش" />
-              <WorkflowStep icon={Truck} index="۴" title="تحویل و پرداخت" detail="ارسال، پیش‌فاکتور و پرداخت" />
+            <div className="grid gap-px border border-border/50 bg-border/50 sm:grid-cols-2">
+              {FLOW.map(([Icon, title, detail], index) => (
+                <div key={title} className="flex min-h-[104px] items-center gap-3 bg-surface p-4 sm:p-5">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-navy text-white"><Icon size={18} /></span>
+                  <div className="min-w-0 flex-1"><p className="text-xs font-extrabold">{title}</p><p className="mt-1 text-[10px] text-text-muted">{detail}</p></div>
+                  <span className="font-mono text-[10px] text-text-faint">0{index + 1}</span>
+                </div>
+              ))}
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-border/20 px-5 py-6 sm:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-3 text-xs text-text-faint sm:flex-row sm:items-center">
+      <footer className="border-t border-border/50 bg-surface px-5 py-6 sm:px-8">
+        <div className="mx-auto flex max-w-[1440px] flex-col justify-between gap-3 text-[11px] text-text-faint sm:flex-row sm:items-center">
           <span>سپهر · سامانه فروش و انبار</span>
-          <span>اطلاعات صفحه‌ی پیش‌نمایش نمونه هستند؛ پنل پس از ورود داده‌های سامانه را نمایش می‌دهد.</span>
+          <span>پیش‌نمایش معرفی سامانه</span>
         </div>
       </footer>
     </div>
   );
 }
 
-function DashboardPreview() {
-  const bars = [35, 53, 43, 78, 62, 94, 70, 83, 55, 76, 42, 66];
-  const rows = [
-    { color: "bg-accent", title: "ثبت سفارش نماینده", subtitle: "همین امروز · در انتظار بررسی", state: "در انتظار" },
-    { color: "bg-success", title: "به‌روزرسانی موجودی", subtitle: "امروز · انبار مرکزی", state: "انجام شد" },
-    { color: "bg-warning", title: "قرارداد نزدیک به تمدید", subtitle: "این هفته · نماینده فروش", state: "پیگیری" },
+function OperationsPreview() {
+  const bars = [35, 52, 44, 73, 58, 90, 64, 82, 57, 75, 43, 69];
+  const products = [
+    ["PAX A920 Pro", "۴G · تهران", "۲۲۰"],
+    ["PAX D210", "۴G · شیراز", "۳۰"],
+    ["PAX A930", "۴G · تهران", "۲۲۰"],
   ];
 
   return (
-    <div className="relative mx-auto w-full max-w-[680px]">
-      <div aria-hidden="true" className="absolute -inset-6 rounded-[36px] bg-accent/10 blur-3xl" />
-      <div className="relative overflow-hidden rounded-[24px] border border-border/25 bg-surface p-3 shadow-[0_36px_100px_-45px_rgba(3,34,63,.55)] sm:rounded-[30px] sm:p-4">
-        <div className="flex items-center justify-between border-b border-border/20 px-2 pb-3">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-gradient text-white"><Boxes size={16} /></span>
-            <div><p className="text-[11px] font-extrabold text-text">نمای کلی</p><p className="text-[9px] text-text-faint">پیش‌نمایش نمونه</p></div>
+    <div className="relative mx-auto w-full max-w-[720px]">
+      <div className="absolute -right-8 -top-8 h-40 w-40 bg-navy/35 blur-3xl" />
+      <div className="relative overflow-hidden border border-border/60 bg-[#090c12] shadow-2xl shadow-black/40">
+        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-white text-[#101a2d]"><Boxes size={17} /></span>
+            <div><p className="text-xs font-extrabold text-white">مرکز عملیات</p><p className="mt-0.5 text-[9px] text-white/45">پیش‌نمایش مدیریتی</p></div>
           </div>
-          <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-rose-400/70" /><span className="h-2 w-2 rounded-full bg-amber-400/70" /><span className="h-2 w-2 rounded-full bg-emerald-400/70" /></div>
+          <span className="rounded-md border border-white/10 bg-[#14213d] px-2.5 py-1.5 text-[9px] font-bold tracking-wide text-white/80">SAMPLE DATA</span>
         </div>
 
-        <div className="grid grid-cols-3 gap-2.5 py-3 sm:gap-3">
-          <PreviewMetric label="سفارش‌های باز" value="پیگیری" icon={ShoppingCart} />
-          <PreviewMetric label="موجودی انبار" value="بررسی" icon={PackageCheck} />
-          <PreviewMetric label="قراردادها" value="به‌روز" icon={FileText} />
+        <div className="grid grid-cols-3 gap-px border-b border-white/10 bg-white/10">
+          <PreviewStat label="دستگاه در انبار" value="۱٬۷۵۰" />
+          <PreviewStat label="PSP فعال" value="۸" />
+          <PreviewStat label="مدل PAX" value="۷" />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-[1fr_0.95fr]">
-          <div className="rounded-2xl border border-border/15 bg-bg/55 p-4">
-            <div className="mb-5 flex items-center justify-between"><p className="text-[11px] font-bold text-text">فعالیت سفارش‌ها</p><span className="text-[9px] text-text-faint">نمودار نمونه</span></div>
-            <div className="flex h-28 items-end gap-1.5 sm:h-36 sm:gap-2">
-              {bars.map((height, index) => <div key={index} className={`flex-1 rounded-t-md ${index > 8 ? "bg-accent" : "bg-accent/45"}`} style={{ height: `${height}%` }} />)}
+        <div className="grid gap-4 p-4 sm:grid-cols-[1.1fr_0.9fr] sm:p-5">
+          <div className="border border-white/10 bg-[#0e131c] p-4">
+            <div className="mb-5 flex items-center justify-between"><p className="text-[11px] font-bold text-white">موجودی PAX</p><span className="text-[9px] text-white/45">تهران / شیراز</span></div>
+            <div className="flex h-32 items-end gap-2 border-b border-white/10 px-1">
+              {bars.map((height, index) => <div key={index} className={`flex-1 ${index > 8 ? "bg-frost" : "bg-[#263b60]"}`} style={{ height: `${height}%` }} />)}
             </div>
-            <div className="mt-3 flex justify-between text-[9px] text-text-faint"><span>شنبه</span><span>دوشنبه</span><span>چهارشنبه</span><span>جمعه</span></div>
+            <div className="mt-3 flex justify-between text-[9px] text-white/40"><span>A920</span><span>A910</span><span>A930</span><span>D210</span><span>S90</span></div>
           </div>
 
-          <div className="rounded-2xl border border-border/15 bg-bg/55 p-4">
-            <div className="mb-2 flex items-center justify-between"><p className="text-[11px] font-bold text-text">رویدادهای اخیر</p><span className="text-[9px] text-accent">مشاهده همه</span></div>
-            <div className="divide-y divide-border/15">
-              {rows.map((row) => (
-                <div key={row.title} className="flex items-center gap-2.5 py-3">
-                  <span className={`h-2 w-2 shrink-0 rounded-full ${row.color}`} />
-                  <div className="min-w-0 flex-1"><p className="truncate text-[10px] font-bold text-text">{row.title}</p><p className="mt-0.5 truncate text-[9px] text-text-faint">{row.subtitle}</p></div>
-                  <span className="text-[9px] text-text-muted">{row.state}</span>
+          <div className="border border-white/10 bg-[#0e131c] p-4">
+            <div className="mb-2 flex items-center justify-between"><p className="text-[11px] font-bold text-white">مدل‌های پرفروش</p><PackageCheck size={15} className="text-frost" /></div>
+            <div className="divide-y divide-white/10">
+              {products.map(([name, detail, count]) => (
+                <div key={name} className="flex items-center gap-2.5 py-3">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#17294a] text-white"><ScanBarcode size={13} /></span>
+                  <div className="min-w-0 flex-1"><p className="truncate text-[10px] font-bold text-white">{name}</p><p className="mt-0.5 text-[9px] text-white/45">{detail}</p></div>
+                  <span className="text-[10px] font-extrabold text-white/80">{count}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
-      </div>
-      <div className="absolute -bottom-5 -right-4 hidden items-center gap-2 rounded-2xl border border-border/20 bg-surface px-4 py-3 shadow-card sm:flex">
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-success/10 text-success"><ClipboardCheck size={16} /></span>
-        <div><p className="text-[10px] font-bold text-text">مدیریت متمرکز</p><p className="text-[9px] text-text-faint">از موجودی تا فروش</p></div>
+        <div className="flex items-center justify-between border-t border-white/10 bg-[#101a2d] px-5 py-3 text-[9px] text-white/60">
+          <span className="inline-flex items-center gap-2"><ClipboardCheck size={13} /> موجودی و سریال قابل رهگیری</span>
+          <span>پیش‌نمایش</span>
+        </div>
       </div>
     </div>
   );
 }
 
-function PreviewMetric({ label, value, icon: Icon }) {
+function PreviewStat({ label, value }) {
   return (
-    <div className="rounded-xl border border-border/15 bg-bg/50 p-2.5 sm:p-3">
-      <div className="flex items-center justify-between gap-1"><p className="truncate text-[9px] text-text-faint sm:text-[10px]">{label}</p><Icon size={14} className="shrink-0 text-accent" /></div>
-      <p className="mt-2 text-xs font-extrabold text-text sm:text-sm">{value}</p>
-      <div className="mt-2 h-1 overflow-hidden rounded-full bg-accent/10"><div className="h-full w-2/3 rounded-full bg-accent" /></div>
-    </div>
-  );
-}
-
-function WorkflowStep({ icon: Icon, index, title, detail }) {
-  return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border/15 bg-surface/90 p-4">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent"><Icon size={18} /></span>
-      <div className="min-w-0 flex-1"><p className="text-xs font-extrabold text-text">{title}</p><p className="mt-1 text-[10px] text-text-muted">{detail}</p></div>
-      <span className="text-[11px] font-extrabold text-text-faint">{index}</span>
+    <div className="bg-[#0c1017] px-4 py-4 sm:px-5">
+      <p className="text-[9px] font-medium text-white/45">{label}</p>
+      <p className="mt-2 text-lg font-extrabold tracking-tight text-white sm:text-xl">{value}</p>
     </div>
   );
 }

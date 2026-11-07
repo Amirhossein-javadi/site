@@ -20,10 +20,18 @@ pip install -r requirements.txt
 copy .env.example .env
 
 python manage.py migrate
-python manage.py seed_demo
+python manage.py reset_site_data --confirm
 python manage.py createsuperuser
 python manage.py runserver 127.0.0.1:8000
 ```
+
+`reset_site_data --confirm` فقط روی SQLite محلی با `DEBUG=True` اجرا می‌شود؛
+تمام رکوردهای قبلی را پاک می‌کند و داده‌های نمونه PSP، کارتخوان‌های PAX،
+تجهیزات عمومی و یک کاربر ورود موقت می‌سازد. رمز ورود موقت را همان لحظه در
+خروجی دستور می‌بینید. برای افزودن دوباره کاتالوگ نمونه بدون پاک‌سازی، از
+`python manage.py seed_demo` استفاده کنید. برای رساندن موجودی نمونه‌ی هر مدل
+PAX به ۲۵۰ دستگاه، بدون پاک‌کردن سفارش‌ها یا حساب‌ها، دستور
+`python manage.py top_up_pos_stock` را اجرا کنید.
 
 - پنل ادمین: `http://127.0.0.1:8000/admin/`
 - ریشه API: `http://127.0.0.1:8000/api/`

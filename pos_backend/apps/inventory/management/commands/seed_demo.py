@@ -1,108 +1,217 @@
-"""
-دستور ساخت داده اولیه برای محیط توسعه.
-
-    python manage.py seed_demo
-
-عمداً همه ورود کالا از طریق services.receive_stock انجام می‌شود، نه با
-ساختن مستقیم رکورد InventoryItem — تا داده اولیه هم دفتر موجودی و هم
-رکوردهای سریال را درست پر کند و شبیه داده واقعی باشد.
-"""
+"""Create a fresh, reusable set of Persian payment-terminal demo data."""
 
 import datetime
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils import timezone
 
 from apps.catalog.models import Brand, Category, Product, ProductVariant
 from apps.contracts.models import Contract
 from apps.inventory import services
-from apps.inventory.models import Warehouse
-from apps.tenants.models import Company, AgentCompany
+from apps.inventory.models import InventoryItem, Warehouse
+from apps.suppliers.models import Supplier
+from apps.tenants.models import AgentCompany, Company
 
 
 class Command(BaseCommand):
-    help = "ساخت داده نمونه برای محیط توسعه"
+    help = "ساخت داده نمونه PSP، کارتخوان‌های PAX و تجهیزات عمومی"
 
     @transaction.atomic
     def handle(self, *args, **options):
         company, _ = Company.objects.get_or_create(
-            slug="negin-rasa", defaults={"name": "شرکت توسعه فناوری نگین رسا"}
+            slug="negin-rasa",
+            defaults={"name": "شرکت نمونه تجهیزات پرداخت"},
         )
 
-        # --- دسته‌بندی و برند ---
-        cat_pos, _ = Category.objects.get_or_create(
-            slug="pos-terminal", defaults={"name": "کارتخوان فروشگاهی"}
+        terminals, _ = Category.objects.get_or_create(
+            slug="pos-terminals", defaults={"name": "کارتخوان"}
         )
-        cat_acc, _ = Category.objects.get_or_create(
+        accessories, _ = Category.objects.get_or_create(
             slug="accessories", defaults={"name": "لوازم جانبی"}
         )
-        brand_vanstone, _ = Brand.objects.get_or_create(
-            slug="vanstone", defaults={"name": "Vanstone"}
-        )
-        brand_pax, _ = Brand.objects.get_or_create(
-            slug="pax", defaults={"name": "PAX"}
+        retail, _ = Category.objects.get_or_create(
+            slug="retail-equipment", defaults={"name": "تجهیزات فروشگاهی"}
         )
 
-        # --- محصولات و نسخه‌ها ---
-        specs = [
+        pax, _ = Brand.objects.get_or_create(slug="pax", defaults={"name": "PAX"})
+        general, _ = Brand.objects.get_or_create(
+            slug="general", defaults={"name": "عمومی"}
+        )
+
+        products = [
             {
-                "code": "VS-V72",
-                "name": "کارتخوان سیار Vanstone V72",
-                "category": cat_pos,
-                "brand": brand_vanstone,
-                "warranty": 18,
-                "variants": [
-                    ("GPRS - مشکی", "VS-V72-GPRS-BK", "18500000.0000", "IRT", True, 30),
-                    ("WiFi - مشکی", "VS-V72-WIFI-BK", "19750000.0000", "IRT", True, 20),
-                ],
-            },
-            {
-                "code": "VS-V72P",
-                "name": "کارتخوان سیار Vanstone V72P",
-                "category": cat_pos,
-                "brand": brand_vanstone,
-                "warranty": 24,
-                "variants": [
-                    ("نسخه استاندارد", "VS-V72P-STD", "23400000.0000", "IRT", True, 15),
-                ],
+                "code": "PAX-A920-PRO",
+                "name": "کارتخوان هوشمند PAX A920 Pro",
+                "category": terminals,
+                "brand": pax,
+                "warranty": 12,
+                "sku": "PAX-A920P-4G",
+                "variant": "Android، 4G و Wi-Fi",
+                "price": "44900000.0000",
+                "quantity": 250,
+                "reorder": 20,
+                "secondary": 30,
+                "serial": True,
             },
             {
                 "code": "PAX-A920",
                 "name": "کارتخوان هوشمند PAX A920",
-                "category": cat_pos,
-                "brand": brand_pax,
+                "category": terminals,
+                "brand": pax,
                 "warranty": 12,
-                "variants": [
-                    ("Android - 4G", "PAX-A920-4G", "420.0000", "USD", True, 12),
-                ],
+                "sku": "PAX-A920-4G",
+                "variant": "Android، 4G",
+                "price": "35900000.0000",
+                "quantity": 250,
+                "reorder": 20,
+                "secondary": 30,
+                "serial": True,
             },
             {
-                "code": "ACC-ROLL",
-                "name": "رول کاغذ حرارتی ۵۷ میلی‌متر",
-                "category": cat_acc,
-                "brand": brand_vanstone,
+                "code": "PAX-A910",
+                "name": "کارتخوان هوشمند PAX A910",
+                "category": terminals,
+                "brand": pax,
+                "warranty": 12,
+                "sku": "PAX-A910-4G",
+                "variant": "Android، 4G",
+                "price": "28900000.0000",
+                "quantity": 250,
+                "reorder": 20,
+                "secondary": 30,
+                "serial": True,
+            },
+            {
+                "code": "PAX-A930",
+                "name": "کارتخوان هوشمند PAX A930",
+                "category": terminals,
+                "brand": pax,
+                "warranty": 12,
+                "sku": "PAX-A930-4G",
+                "variant": "Android، 4G و Wi-Fi",
+                "price": "52900000.0000",
+                "quantity": 250,
+                "reorder": 20,
+                "secondary": 30,
+                "serial": True,
+            },
+            {
+                "code": "PAX-D210",
+                "name": "کارتخوان سیار PAX D210",
+                "category": terminals,
+                "brand": pax,
+                "warranty": 12,
+                "sku": "PAX-D210-4G",
+                "variant": "4G، صفحه‌کلید فیزیکی",
+                "price": "22500000.0000",
+                "quantity": 250,
+                "reorder": 20,
+                "secondary": 30,
+                "serial": True,
+            },
+            {
+                "code": "PAX-D230",
+                "name": "کارتخوان سیار PAX D230",
+                "category": terminals,
+                "brand": pax,
+                "warranty": 12,
+                "sku": "PAX-D230-4G",
+                "variant": "4G، نمایشگر رنگی",
+                "price": "27900000.0000",
+                "quantity": 250,
+                "reorder": 20,
+                "secondary": 30,
+                "serial": True,
+            },
+            {
+                "code": "PAX-S90",
+                "name": "کارتخوان رومیزی PAX S90",
+                "category": terminals,
+                "brand": pax,
+                "warranty": 12,
+                "sku": "PAX-S90-GPRS",
+                "variant": "GPRS، رومیزی",
+                "price": "13900000.0000",
+                "quantity": 250,
+                "reorder": 20,
+                "secondary": 30,
+                "serial": True,
+            },
+            {
+                "code": "GEN-THERMAL-ROLL",
+                "name": "رول حرارتی کارتخوان ۵۷ میلی‌متری",
+                "category": accessories,
+                "brand": general,
                 "warranty": 0,
-                "variants": [
-                    ("بسته ۱۰ عددی", "ACC-ROLL-10", "145000.0000", "IRT", False, 500),
-                ],
+                "sku": "GEN-THERMAL-ROLL-10",
+                "variant": "بسته ۱۰ عددی",
+                "price": "350000.0000",
+                "quantity": 800,
+                "reorder": 100,
+                "secondary": 0,
+                "serial": False,
+            },
+            {
+                "code": "GEN-POS-PRINTER",
+                "name": "چاپگر حرارتی فروشگاهی",
+                "category": retail,
+                "brand": general,
+                "warranty": 12,
+                "sku": "GEN-PRINTER-80MM",
+                "variant": "USB، عرض چاپ ۸۰ میلی‌متر",
+                "price": "14900000.0000",
+                "quantity": 18,
+                "reorder": 4,
+                "secondary": 0,
+                "serial": True,
+            },
+            {
+                "code": "GEN-BARCODE-SCANNER",
+                "name": "بارکدخوان فروشگاهی",
+                "category": retail,
+                "brand": general,
+                "warranty": 12,
+                "sku": "GEN-BARCODE-USB",
+                "variant": "USB، سیمی",
+                "price": "8200000.0000",
+                "quantity": 16,
+                "reorder": 4,
+                "secondary": 0,
+                "serial": True,
+            },
+            {
+                "code": "GEN-POS-CHARGER",
+                "name": "شارژر و پایه کارتخوان",
+                "category": accessories,
+                "brand": general,
+                "warranty": 3,
+                "sku": "GEN-POS-CHARGER",
+                "variant": "پایه رومیزی و کابل برق",
+                "price": "1650000.0000",
+                "quantity": 35,
+                "reorder": 8,
+                "secondary": 0,
+                "serial": False,
             },
         ]
 
-        # --- انبارها ---
-        wh_main, _ = Warehouse.objects.get_or_create(
-            tenant=company,
-            code="WH-TEH",
-            defaults={"name": "انبار مرکزی تهران", "address": "تهران"},
-        )
-        wh_mashhad, _ = Warehouse.objects.get_or_create(
-            tenant=company,
-            code="WH-MSH",
-            defaults={"name": "انبار مشهد", "address": "مشهد"},
-        )
+        warehouses = {}
+        for code, name, address in [
+            ("WH-TEH", "انبار مرکزی تهران", "تهران"),
+            ("WH-SHIRAZ", "انبار شیراز", "شیراز"),
+        ]:
+            warehouse, _ = Warehouse.objects.get_or_create(
+                tenant=company,
+                code=code,
+                defaults={"name": name, "address": address},
+            )
+            warehouses[code] = warehouse
 
-        created_variants = []
-        for spec in specs:
-            product, _ = Product.objects.get_or_create(
+        today = timezone.localdate()
+        stocked_variants = []
+        for spec in products:
+            product, _ = Product.objects.update_or_create(
                 tenant=company,
                 code=spec["code"],
                 defaults={
@@ -110,98 +219,109 @@ class Command(BaseCommand):
                     "category": spec["category"],
                     "brand": spec["brand"],
                     "warranty_months": spec["warranty"],
+                    "description": "داده نمونه؛ قیمت و سریال‌ها برای راه‌اندازی آزمایشی هستند.",
+                    "is_active": True,
                 },
             )
-            for name, sku, price, currency, needs_serial, qty in spec["variants"]:
-                variant, created = ProductVariant.objects.get_or_create(
-                    sku=sku,
-                    defaults={
-                        "product": product,
-                        "name": name,
-                        "base_price": price,
-                        "currency": currency,
-                        "requires_serial": needs_serial,
-                        "lead_time_days": 3 if needs_serial else 1,
-                    },
-                )
-                if created:
-                    created_variants.append((variant, qty))
+            variant, _ = ProductVariant.objects.get_or_create(
+                sku=spec["sku"],
+                defaults={
+                    "product": product,
+                    "name": spec["variant"],
+                    "base_price": spec["price"],
+                    "currency": ProductVariant.Currency.IRT,
+                    "requires_serial": spec["serial"],
+                    "lead_time_days": 3 if spec["serial"] else 1,
+                },
+            )
+            stocked_variants.append((variant, spec))
 
-        # --- ورود کالا به انبار از مسیر سرویس واقعی ---
-        for variant, qty in created_variants:
-            warehouse = wh_main
-            if variant.requires_serial:
-                serials = [
-                    f"{variant.sku}-{str(i).zfill(4)}" for i in range(1, qty + 1)
-                ]
-                services.receive_stock(
-                    warehouse=warehouse,
-                    variant=variant,
-                    quantity=qty,
-                    serial_numbers=serials,
-                    reference="SEED-RECEIPT",
-                    note="داده اولیه توسعه",
-                )
-            else:
-                services.receive_stock(
-                    warehouse=warehouse,
-                    variant=variant,
-                    quantity=qty,
-                    reference="SEED-RECEIPT",
-                    note="داده اولیه توسعه",
-                )
+        for variant, spec in stocked_variants:
+            main_qty = spec["quantity"] - spec["secondary"]
+            for code, qty in [("WH-TEH", main_qty), ("WH-SHIRAZ", spec["secondary"])]:
+                warehouse = warehouses[code]
+                item = InventoryItem.objects.filter(
+                    warehouse=warehouse, variant=variant
+                ).first()
+                current_qty = item.on_hand if item else 0
+                add_qty = max(0, qty - current_qty)
+                if add_qty:
+                    serial_numbers = None
+                    if variant.requires_serial:
+                        prefix = f"SAMPLE-{variant.sku}-{code}-"
+                        existing_serials = variant.serials.filter(
+                            warehouse=warehouse,
+                            serial_number__startswith=prefix,
+                        ).values_list("serial_number", flat=True)
+                        last_number = max(
+                            (int(number.removeprefix(prefix)) for number in existing_serials),
+                            default=0,
+                        )
+                        serial_numbers = [
+                            f"{prefix}{number:04d}"
+                            for number in range(last_number + 1, last_number + add_qty + 1)
+                        ]
+                    services.receive_stock(
+                        warehouse=warehouse,
+                        variant=variant,
+                        quantity=add_qty,
+                        serial_numbers=serial_numbers,
+                        reference=f"FRESH-SEED-{today.isoformat()}",
+                        note="موجودی نمونه جدید؛ شماره سریال‌ها آزمایشی هستند.",
+                    )
+                InventoryItem.objects.filter(
+                    warehouse=warehouse, variant=variant
+                ).update(reorder_point=spec["reorder"])
 
-        # مقداری موجودی هم در انبار مشهد تا فیلتر انبار قابل تست باشد
-        mashhad_variant = ProductVariant.objects.filter(sku="VS-V72-GPRS-BK").first()
-        if mashhad_variant and not mashhad_variant.inventory_items.filter(
-            warehouse=wh_mashhad
-        ).exists():
-            services.receive_stock(
-                warehouse=wh_mashhad,
-                variant=mashhad_variant,
-                quantity=8,
-                serial_numbers=[f"VS-V72-GPRS-BK-MSH-{str(i).zfill(4)}" for i in range(1, 9)],
-                reference="SEED-RECEIPT",
-                note="داده اولیه توسعه",
+        psp_names = [
+            "به‌پرداخت ملت",
+            "پرداخت الکترونیک سامان (سپ)",
+            "آسان‌پرداخت پرشین (آپ)",
+            "پرداخت نوین آرین",
+            "تجارت الکترونیک پارسیان (تاپ)",
+            "پرداخت الکترونیک سداد",
+            "ایران‌کیش",
+            "فن‌آوا کارت",
+        ]
+        end_date = today + datetime.timedelta(days=365)
+        for index, name in enumerate(psp_names, start=1):
+            agent, _ = AgentCompany.objects.get_or_create(
+                tenant=company,
+                name=name,
+                defaults={"is_active": True},
+            )
+            Contract.objects.update_or_create(
+                number=f"PSP-2026-{index:03d}",
+                defaults={
+                    "tenant": company,
+                    "title": f"قرارداد نمونه تأمین تجهیزات - {name}",
+                    "agent": agent,
+                    "device_cap": 250,
+                    "end_date": end_date,
+                    "status": Contract.Status.ACTIVE,
+                },
             )
 
-        # --- نمایندگان ---
-        agent1, _ = AgentCompany.objects.get_or_create(
-            tenant=company, name="شرکت توسعه فناوری نگین رسا"
-        )
-        agent2, _ = AgentCompany.objects.get_or_create(
-            tenant=company, name="بازرگانی پرداخت البرز"
-        )
-
-        # --- قراردادهای نمونه ---
-        Contract.objects.get_or_create(
-            number="CT-2026-001",
-            defaults=dict(
+        suppliers = [
+            ("SUP-TERMINALS", "تأمین‌گستر تجهیزات پرداخت", 7),
+            ("SUP-ACCESSORIES", "پخش لوازم فروشگاهی", 5),
+            ("SUP-SERVICE", "خدمات فنی پایانه‌ها", 10),
+        ]
+        for code, name, lead_time in suppliers:
+            Supplier.objects.get_or_create(
                 tenant=company,
-                title="قرارداد تامین نمایندگی مرکزی",
-                agent=agent1,
-                device_cap=500,
-                end_date=datetime.date(2026, 12, 21),
-                status=Contract.Status.ACTIVE,
-            ),
-        )
-        Contract.objects.get_or_create(
-            number="CT-2026-002",
-            defaults=dict(
-                tenant=company,
-                title="قرارداد تامین نمایندگی منطقه‌ای",
-                agent=agent2,
-                device_cap=200,
-                end_date=datetime.date(2027, 2, 4),
-                status=Contract.Status.ACTIVE,
-            ),
-        )
+                code=code,
+                defaults={
+                    "name": name,
+                    "lead_time_days": lead_time,
+                    "status": Supplier.Status.ACTIVE,
+                },
+            )
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"داده نمونه ساخته شد: "
-                f"{Product.objects.count()} محصول، "
-                f"{ProductVariant.objects.count()} نسخه، "
-                f"{Warehouse.objects.count()} انبار."
+                f"Demo data ready: {len(psp_names)} PSPs, "
+                f"{len(products)} products, {len(warehouses)} warehouses, "
+                f"{sum(spec['quantity'] for spec in products if spec['brand'].slug == 'pax')} PAX units."
             )
         )

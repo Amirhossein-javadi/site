@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { ThemeContext } from "./theme-context";
-const STORAGE_KEY = "pos-dashboard-theme";
+const STORAGE_KEY = "pos-dashboard-theme-v2";
 
 function getInitialTheme() {
   try {
     const saved = window.localStorage.getItem(STORAGE_KEY);
     if (saved === "light" || saved === "dark") return saved;
   } catch {
-    // Private browsing can disable local storage; use the system setting instead.
+    // Private browsing can disable local storage; use the default dark theme instead.
   }
-  return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  return "dark";
 }
 
 export function ThemeProvider({ children }) {
